@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KenvinZone Forex Matrix & Currency Strength Intelligence v2</title>
-    <!-- Tailwind CSS -->
+    <title>KenvinZone Forex Matrix & Currency Strength Intelligence v3</title>
+    <!-- Tailwind CSS (CDN — chấp nhận cho tool cá nhân single-file; nếu deploy public quy mô lớn nên build Tailwind CLI) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -13,8 +13,6 @@
                     colors: {
                         brand: {
                             bg: '#070a13',
-                            card: 'rgba(15, 23, 42, 0.65)',
-                            border: 'rgba(51, 65, 85, 0.5)',
                             primary: '#6366f1',
                             success: '#10b981',
                             danger: '#f43f5e',
@@ -30,19 +28,16 @@
             }
         }
     </script>
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- ChartJS for Strength Visualization -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: #05070f;
-            background-image: 
+            background-image:
                 radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.08) 0px, transparent 50%),
                 radial-gradient(at 50% 0%, rgba(139, 92, 246, 0.05) 0px, transparent 50%),
                 radial-gradient(at 100% 0%, rgba(6, 182, 212, 0.08) 0px, transparent 50%);
@@ -55,31 +50,22 @@
             border: 1px solid rgba(255, 255, 255, 0.06);
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: rgba(15, 23, 42, 0.3);
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(99, 102, 241, 0.2);
-            border-radius: 9999px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: rgba(99, 102, 241, 0.4);
-        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.3); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.2); border-radius: 9999px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.4); }
         @keyframes pulse-glow {
             0%, 100% { opacity: 0.6; transform: scale(1); }
             50% { opacity: 1; transform: scale(1.05); }
         }
-        .glow-point-green {
-            box-shadow: 0 0 12px #10b981;
-            animation: pulse-glow 2s infinite ease-in-out;
+        .glow-point-green { box-shadow: 0 0 12px #10b981; animation: pulse-glow 2s infinite ease-in-out; }
+        @keyframes toast-in {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        .glow-point-red {
-            box-shadow: 0 0 12px #f43f5e;
-            animation: pulse-glow 2s infinite ease-in-out;
+        .toast-item { animation: toast-in .25s ease-out; }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
         }
     </style>
 </head>
@@ -96,14 +82,14 @@
                     <h1 class="font-extrabold text-lg tracking-tight bg-gradient-to-r from-indigo-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">
                         KenvinZone FOREX MATRIX
                     </h1>
-                    <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Multi-Timeframe Trend & Strength Intelligence</p>
+                    <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Multi-Timeframe Trend & Strength Intelligence v3</p>
                 </div>
             </div>
-            
-            <div class="flex items-center space-x-4">
+
+            <div class="flex items-center space-x-3">
                 <div class="hidden md:flex items-center space-x-2 text-xs bg-slate-900/90 py-1.5 px-3 rounded-lg border border-slate-800">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 glow-point-green"></span>
-                    <span class="text-slate-300 font-medium" id="live-time">Thứ Hai Đầu Tuần</span>
+                    <span class="text-slate-300 font-medium" id="live-time">--</span>
                 </div>
                 <div class="flex bg-slate-900/90 rounded-lg p-0.5 border border-slate-800">
                     <button onclick="switchTab('dashboard')" id="btn-tab-dashboard" class="px-3 py-1.5 rounded-md text-xs font-semibold flex items-center space-x-1.5 transition-all text-white bg-indigo-600 shadow-lg">
@@ -119,13 +105,22 @@
                         <span>Lịch Sử Lưu</span>
                     </button>
                 </div>
+                <button onclick="openSettingsModal()" title="Cài đặt API & Sao lưu" class="p-2 rounded-lg bg-slate-900/90 border border-slate-800 text-slate-400 hover:text-indigo-300 hover:border-indigo-500/40 transition-all">
+                    <i data-lucide="settings" class="w-4 h-4"></i>
+                </button>
             </div>
         </div>
     </header>
 
     <!-- Main Container -->
     <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-        
+
+        <!-- Data Source & Freshness Banner -->
+        <div id="data-source-banner" class="hidden mb-4"></div>
+
+        <!-- Completeness Warning (shown when not all currencies scored) -->
+        <div id="completeness-banner" class="hidden mb-4"></div>
+
         <!-- Quick Stats Banner -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div class="glass-panel rounded-xl p-4 flex items-center justify-between border-slate-800">
@@ -140,7 +135,7 @@
                     <i data-lucide="chevron-up-circle" class="w-6 h-6"></i>
                 </div>
             </div>
-            
+
             <div class="glass-panel rounded-xl p-4 flex items-center justify-between border-slate-800">
                 <div class="space-y-1">
                     <span class="text-xs text-slate-400 block font-medium">Đồng Tiền Yếu Nhất</span>
@@ -154,7 +149,7 @@
                 </div>
             </div>
 
-            <div class="glass-panel rounded-xl p-4 flex items-center justify-between border-slate-800 col-span-1">
+            <div class="glass-panel rounded-xl p-4 flex items-center justify-between border-slate-800">
                 <div class="space-y-1">
                     <span class="text-xs text-slate-400 block font-medium">Cặp Tiền Ưu Tiên Mua</span>
                     <span id="stat-best-buy" class="text-lg font-bold text-indigo-300">--</span>
@@ -164,7 +159,7 @@
                 </div>
             </div>
 
-            <div class="glass-panel rounded-xl p-4 flex items-center justify-between border-slate-800 col-span-1">
+            <div class="glass-panel rounded-xl p-4 flex items-center justify-between border-slate-800">
                 <div class="space-y-1">
                     <span class="text-xs text-slate-400 block font-medium">Cặp Tiền Ưu Tiên Bán</span>
                     <span id="stat-best-sell" class="text-lg font-bold text-cyan-300">--</span>
@@ -178,7 +173,7 @@
         <!-- TAB 1: DASHBOARD & ANALYSIS -->
         <div id="tab-dashboard" class="space-y-6">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                
+
                 <!-- Left: Currency Input (5/12) -->
                 <div class="lg:col-span-5 space-y-4">
                     <div class="glass-panel rounded-2xl p-5 border-slate-800 flex flex-col h-full">
@@ -190,7 +185,7 @@
                             <div class="flex items-center space-x-2">
                                 <button onclick="triggerAIScan()" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-1 px-2.5 rounded transition-all flex items-center space-x-1.5 shadow-md shadow-indigo-600/20">
                                     <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-                                    <span>AI Quét Tự Động</span>
+                                    <span>AI Ước Lượng</span>
                                 </button>
                                 <button onclick="resetAllFactors()" class="text-xs text-slate-400 hover:text-rose-400 flex items-center space-x-1 transition-all py-1 px-2 rounded hover:bg-slate-900">
                                     <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
@@ -199,258 +194,38 @@
                             </div>
                         </div>
 
-                        <!-- Active Currency Picker Tabs -->
-                        <div class="flex space-x-1.5 p-1 bg-slate-900/60 rounded-xl mb-4 overflow-x-auto custom-scrollbar">
-                            <button onclick="selectCurrencyTab('USD')" id="cur-tab-USD" class="flex-1 min-w-[50px] py-2 rounded-lg text-xs font-bold text-center transition-all bg-indigo-600/20 text-indigo-300 border border-indigo-500/30">
-                                USD
-                            </button>
-                            <button onclick="selectCurrencyTab('EUR')" id="cur-tab-EUR" class="flex-1 min-w-[50px] py-2 rounded-lg text-xs font-bold text-center transition-all text-slate-400 hover:text-slate-200">
-                                EUR
-                            </button>
-                            <button onclick="selectCurrencyTab('GBP')" id="cur-tab-GBP" class="flex-1 min-w-[50px] py-2 rounded-lg text-xs font-bold text-center transition-all text-slate-400 hover:text-slate-200">
-                                GBP
-                            </button>
-                            <button onclick="selectCurrencyTab('JPY')" id="cur-tab-JPY" class="flex-1 min-w-[50px] py-2 rounded-lg text-xs font-bold text-center transition-all text-slate-400 hover:text-slate-200">
-                                JPY
-                            </button>
-                            <button onclick="selectCurrencyTab('AUD')" id="cur-tab-AUD" class="flex-1 min-w-[50px] py-2 rounded-lg text-xs font-bold text-center transition-all text-slate-400 hover:text-slate-200">
-                                AUD
-                            </button>
-                            <button onclick="selectCurrencyTab('CAD')" id="cur-tab-CAD" class="flex-1 min-w-[50px] py-2 rounded-lg text-xs font-bold text-center transition-all text-slate-400 hover:text-slate-200">
-                                CAD
-                            </button>
-                            <button onclick="selectCurrencyTab('CHF')" id="cur-tab-CHF" class="flex-1 min-w-[50px] py-2 rounded-lg text-xs font-bold text-center transition-all text-slate-400 hover:text-slate-200">
-                                CHF
-                            </button>
-                            <button onclick="selectCurrencyTab('NZD')" id="cur-tab-NZD" class="flex-1 min-w-[50px] py-2 rounded-lg text-xs font-bold text-center transition-all text-slate-400 hover:text-slate-200">
-                                NZD
-                            </button>
+                        <!-- Scored progress -->
+                        <div class="flex items-center justify-between text-[10px] text-slate-500 font-semibold mb-3 px-1">
+                            <span>Tiến độ chấm điểm: <span id="scored-count" class="text-indigo-400 font-extrabold">0/8</span> đồng tiền</span>
+                            <span id="scoring-dots" class="tracking-widest"></span>
                         </div>
 
-                        <!-- Current Scored details for the selected currency -->
+                        <!-- Active Currency Picker Tabs -->
+                        <div class="flex space-x-1.5 p-1 bg-slate-900/60 rounded-xl mb-4 overflow-x-auto custom-scrollbar" id="currency-tabs-row"></div>
+
+                        <!-- Current scored details for the selected currency -->
                         <div id="active-currency-card" class="bg-slate-900/40 p-4 rounded-xl border border-slate-800/80 space-y-4 flex-grow custom-scrollbar overflow-y-auto max-h-[620px]">
                             <div class="flex items-center justify-between pb-3 border-b border-slate-800/40">
                                 <div class="flex items-center space-x-2.5">
                                     <span id="active-flag" class="text-3xl">🇺🇸</span>
                                     <div>
                                         <h3 id="active-code" class="text-lg font-bold text-white">USD</h3>
-                                        <span id="active-name" class="text-xs text-slate-400 font-medium">United States Dollar</span>
+                                        <span id="active-name" class="text-xs text-slate-400 font-medium">Đô la Mỹ</span>
                                     </div>
                                 </div>
                                 <div class="text-right">
                                     <span class="text-[10px] text-slate-400 font-semibold uppercase block tracking-wider">Tổng Điểm Sức Mạnh</span>
-                                    <span id="active-score" class="text-2xl font-black bg-gradient-to-r from-emerald-400 to-indigo-400 bg-clip-text text-transparent">+0.0</span>
+                                    <span id="active-score" class="text-2xl font-black text-slate-400">0.0</span>
                                 </div>
                             </div>
 
-                            <!-- Indicator Checklist -->
-                            <div class="space-y-3.5">
-                                <!-- 1. W1 Row -->
-                                <div class="space-y-1">
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-xs font-bold text-slate-300 flex items-center space-x-1">
-                                            <span class="px-1.5 py-0.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded text-[9px] font-extrabold uppercase">W1</span>
-                                            <span>Khung Tuần</span>
-                                        </span>
-                                        <span class="text-slate-500 text-[9px] font-medium">Trọng số: 3đ</span>
-                                    </div>
-                                    <div class="grid grid-cols-3 gap-2">
-                                        <button onclick="setIndicator('trendW1', -3)" id="btn-w1-bearish" class="py-1 px-2.5 rounded-lg text-xs font-semibold border transition-all flex items-center justify-center gap-1">
-                                            <i data-lucide="trending-down" class="w-3 h-3 text-rose-400"></i>
-                                            <span>Bearish (-3)</span>
-                                        </button>
-                                        <button onclick="setIndicator('trendW1', 0)" id="btn-w1-neutral" class="py-1 px-2.5 rounded-lg text-xs font-semibold border transition-all flex items-center justify-center gap-1">
-                                            <i data-lucide="minus" class="w-3 h-3 text-slate-400"></i>
-                                            <span>Neutral</span>
-                                        </button>
-                                        <button onclick="setIndicator('trendW1', 3)" id="btn-w1-bullish" class="py-1 px-2.5 rounded-lg text-xs font-semibold border transition-all flex items-center justify-center gap-1">
-                                            <i data-lucide="trending-up" class="w-3 h-3 text-emerald-400"></i>
-                                            <span>Bullish (+3)</span>
-                                        </button>
-                                    </div>
-                                </div>
+                            <!-- Indicator rows are generated by JS to keep code DRY -->
+                            <div class="space-y-3.5" id="trend-rows-container"></div>
 
-                                <!-- 2. D1 Row -->
-                                <div class="space-y-1">
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-xs font-bold text-slate-300 flex items-center space-x-1">
-                                            <span class="px-1.5 py-0.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded text-[9px] font-extrabold uppercase">D1</span>
-                                            <span>Khung Ngày</span>
-                                        </span>
-                                        <span class="text-slate-500 text-[9px] font-medium">Trọng số: 2đ</span>
-                                    </div>
-                                    <div class="grid grid-cols-3 gap-2">
-                                        <button onclick="setIndicator('trendD1', -2)" id="btn-d1-bearish" class="py-1 px-2.5 rounded-lg text-xs font-semibold border transition-all flex items-center justify-center gap-1">
-                                            <i data-lucide="chevron-down" class="w-3 h-3 text-rose-400"></i>
-                                            <span>Bearish (-2)</span>
-                                        </button>
-                                        <button onclick="setIndicator('trendD1', 0)" id="btn-d1-neutral" class="py-1 px-2.5 rounded-lg text-xs font-semibold border transition-all flex items-center justify-center gap-1">
-                                            <i data-lucide="minus-horizontal" class="w-3 h-3 text-slate-400"></i>
-                                            <span>Neutral</span>
-                                        </button>
-                                        <button onclick="setIndicator('trendD1', 2)" id="btn-d1-bullish" class="py-1 px-2.5 rounded-lg text-xs font-semibold border transition-all flex items-center justify-center gap-1">
-                                            <i data-lucide="chevron-up" class="w-3 h-3 text-emerald-400"></i>
-                                            <span>Bullish (+2)</span>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- 3. H4 Row -->
-                                <div class="space-y-1">
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-xs font-bold text-slate-300 flex items-center space-x-1">
-                                            <span class="px-1.5 py-0.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded text-[9px] font-extrabold uppercase">H4</span>
-                                            <span>Khung 4 Giờ</span>
-                                        </span>
-                                        <span class="text-slate-500 text-[9px] font-medium">Trọng số: 1.5đ</span>
-                                    </div>
-                                    <div class="grid grid-cols-3 gap-2">
-                                        <button onclick="setIndicator('trendH4', -1.5)" id="btn-h4-bearish" class="py-1 px-2.5 rounded-lg text-xs font-semibold border transition-all flex items-center justify-center gap-1">
-                                            <i data-lucide="chevron-down" class="w-3 h-3 text-rose-400"></i>
-                                            <span>Bearish (-1.5)</span>
-                                        </button>
-                                        <button onclick="setIndicator('trendH4', 0)" id="btn-h4-neutral" class="py-1 px-2.5 rounded-lg text-xs font-semibold border transition-all flex items-center justify-center gap-1">
-                                            <i data-lucide="minus-horizontal" class="w-3 h-3 text-slate-400"></i>
-                                            <span>Neutral</span>
-                                        </button>
-                                        <button onclick="setIndicator('trendH4', 1.5)" id="btn-h4-bullish" class="py-1 px-2.5 rounded-lg text-xs font-semibold border transition-all flex items-center justify-center gap-1">
-                                            <i data-lucide="chevron-up" class="w-3 h-3 text-emerald-400"></i>
-                                            <span>Bullish (+1.5)</span>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- 4. H1 Row -->
-                                <div class="space-y-1">
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-xs font-bold text-slate-300 flex items-center space-x-1">
-                                            <span class="px-1.5 py-0.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded text-[9px] font-extrabold uppercase">H1</span>
-                                            <span>Khung 1 Giờ</span>
-                                        </span>
-                                        <span class="text-slate-500 text-[9px] font-medium">Trọng số: 1đ</span>
-                                    </div>
-                                    <div class="grid grid-cols-3 gap-2">
-                                        <button onclick="setIndicator('trendH1', -1)" id="btn-h1-bearish" class="py-1 px-2.5 rounded-lg text-xs font-semibold border transition-all flex items-center justify-center gap-1">
-                                            <i data-lucide="chevron-down" class="w-3 h-3 text-rose-400"></i>
-                                            <span>Bearish (-1)</span>
-                                        </button>
-                                        <button onclick="setIndicator('trendH1', 0)" id="btn-h1-neutral" class="py-1 px-2.5 rounded-lg text-xs font-semibold border transition-all flex items-center justify-center gap-1">
-                                            <i data-lucide="minus-horizontal" class="w-3 h-3 text-slate-400"></i>
-                                            <span>Neutral</span>
-                                        </button>
-                                        <button onclick="setIndicator('trendH1', 1)" id="btn-h1-bullish" class="py-1 px-2.5 rounded-lg text-xs font-semibold border transition-all flex items-center justify-center gap-1">
-                                            <i data-lucide="chevron-up" class="w-3 h-3 text-emerald-400"></i>
-                                            <span>Bullish (+1)</span>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- 5. M15 Row -->
-                                <div class="space-y-1">
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-xs font-bold text-slate-300 flex items-center space-x-1">
-                                            <span class="px-1.5 py-0.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded text-[9px] font-extrabold uppercase">M15</span>
-                                            <span>Khung 15 Phút</span>
-                                        </span>
-                                        <span class="text-slate-500 text-[9px] font-medium">Trọng số: 0.5đ</span>
-                                    </div>
-                                    <div class="grid grid-cols-3 gap-2">
-                                        <button onclick="setIndicator('trendM15', -0.5)" id="btn-m15-bearish" class="py-1 px-2.5 rounded-lg text-xs font-semibold border transition-all flex items-center justify-center gap-1">
-                                            <i data-lucide="chevron-down" class="w-3 h-3 text-rose-400"></i>
-                                            <span>Bearish (-0.5)</span>
-                                        </button>
-                                        <button onclick="setIndicator('trendM15', 0)" id="btn-m15-neutral" class="py-1 px-2.5 rounded-lg text-xs font-semibold border transition-all flex items-center justify-center gap-1">
-                                            <i data-lucide="minus-horizontal" class="w-3 h-3 text-slate-400"></i>
-                                            <span>Neutral</span>
-                                        </button>
-                                        <button onclick="setIndicator('trendM15', 0.5)" id="btn-m15-bullish" class="py-1 px-2.5 rounded-lg text-xs font-semibold border transition-all flex items-center justify-center gap-1">
-                                            <i data-lucide="chevron-up" class="w-3 h-3 text-emerald-400"></i>
-                                            <span>Bullish (+0.5)</span>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- 6. M5 Row -->
-                                <div class="space-y-1">
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-xs font-bold text-slate-300 flex items-center space-x-1">
-                                            <span class="px-1.5 py-0.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded text-[9px] font-extrabold uppercase">M5</span>
-                                            <span>Khung 5 Phút</span>
-                                        </span>
-                                        <span class="text-slate-500 text-[9px] font-medium">Trọng số: 0.5đ</span>
-                                    </div>
-                                    <div class="grid grid-cols-3 gap-2">
-                                        <button onclick="setIndicator('trendM5', -0.5)" id="btn-m5-bearish" class="py-1 px-2.5 rounded-lg text-xs font-semibold border transition-all flex items-center justify-center gap-1">
-                                            <i data-lucide="chevron-down" class="w-3 h-3 text-rose-400"></i>
-                                            <span>Bearish (-0.5)</span>
-                                        </button>
-                                        <button onclick="setIndicator('trendM5', 0)" id="btn-m5-neutral" class="py-1 px-2.5 rounded-lg text-xs font-semibold border transition-all flex items-center justify-center gap-1">
-                                            <i data-lucide="minus-horizontal" class="w-3 h-3 text-slate-400"></i>
-                                            <span>Neutral</span>
-                                        </button>
-                                        <button onclick="setIndicator('trendM5', 0.5)" id="btn-m5-bullish" class="py-1 px-2.5 rounded-lg text-xs font-semibold border transition-all flex items-center justify-center gap-1">
-                                            <i data-lucide="chevron-up" class="w-3 h-3 text-emerald-400"></i>
-                                            <span>Bullish (+0.5)</span>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- Technical Filters (EMA, RSI, Sentiment) -->
-                                <div class="space-y-2 pt-2 border-t border-slate-800/40">
-                                    <span class="text-xs font-bold text-slate-300 block">Bộ Lọc Kỹ Thuật & Vĩ Mô</span>
-                                    
-                                    <!-- EMA 20 -->
-                                    <div class="flex items-center justify-between p-2.5 bg-slate-950/40 rounded-lg border border-slate-800/60">
-                                        <div class="flex items-center space-x-2.5">
-                                            <div class="p-1.5 rounded bg-blue-500/10 text-blue-400">
-                                                <i data-lucide="git-commit" class="w-3.5 h-3.5"></i>
-                                            </div>
-                                            <div>
-                                                <p class="text-xs font-bold text-slate-200">Đường EMA 20</p>
-                                                <p class="text-[9px] text-slate-400">Giá hiện tại nằm trên hay dưới MA?</p>
-                                            </div>
-                                        </div>
-                                        <div class="flex bg-slate-900 rounded p-0.5 border border-slate-800">
-                                            <button onclick="setIndicator('ema20', -1)" id="btn-ema-below" class="px-2 py-1 text-[10px] font-bold rounded transition-all">Dưới MA (-1)</button>
-                                            <button onclick="setIndicator('ema20', 1)" id="btn-ema-above" class="px-2 py-1 text-[10px] font-bold rounded transition-all">Trên MA (+1)</button>
-                                        </div>
-                                    </div>
-
-                                    <!-- RSI 14 -->
-                                    <div class="flex items-center justify-between p-2.5 bg-slate-950/40 rounded-lg border border-slate-800/60">
-                                        <div class="flex items-center space-x-2.5">
-                                            <div class="p-1.5 rounded bg-purple-500/10 text-purple-400">
-                                                <i data-lucide="activity" class="w-3.5 h-3.5"></i>
-                                            </div>
-                                            <div>
-                                                <p class="text-xs font-bold text-slate-200">Chỉ số RSI (14)</p>
-                                                <p class="text-[9px] text-slate-400">Vị thế RSI &gt; 50 (Mạnh) hay &lt; 50 (Yếu)</p>
-                                            </div>
-                                        </div>
-                                        <div class="flex bg-slate-900 rounded p-0.5 border border-slate-800">
-                                            <button onclick="setIndicator('rsi', -1)" id="btn-rsi-below" class="px-2 py-1 text-[10px] font-bold rounded transition-all">RSI &lt; 50 (-1)</button>
-                                            <button onclick="setIndicator('rsi', 1)" id="btn-rsi-above" class="px-2 py-1 text-[10px] font-bold rounded transition-all">RSI &gt; 50 (+1)</button>
-                                        </div>
-                                    </div>
-
-                                    <!-- Sentiment -->
-                                    <div class="flex items-center justify-between p-2.5 bg-slate-950/40 rounded-lg border border-slate-800/60">
-                                        <div class="flex items-center space-x-2.5">
-                                            <div class="p-1.5 rounded bg-amber-500/10 text-amber-400">
-                                                <i data-lucide="newspaper" class="w-3.5 h-3.5"></i>
-                                            </div>
-                                            <div>
-                                                <p class="text-xs font-bold text-slate-200">Tin Tức & Vĩ Mô</p>
-                                                <p class="text-[9px] text-slate-400">Tâm lý truyền thông, COT & tin tức cơ bản</p>
-                                            </div>
-                                        </div>
-                                        <div class="flex bg-slate-900 rounded p-0.5 border border-slate-800">
-                                            <button onclick="setIndicator('sentiment', -1)" id="btn-sent-bearish" class="px-2 py-1 text-[10px] font-bold rounded transition-all">Tiêu Cực (-1)</button>
-                                            <button onclick="setIndicator('sentiment', 1)" id="btn-sent-bullish" class="px-2 py-1 text-[10px] font-bold rounded transition-all">Tích Cực (+1)</button>
-                                        </div>
-                                    </div>
-
-                                </div>
+                            <!-- Technical Filters (EMA, RSI, Sentiment) -->
+                            <div class="space-y-2 pt-2 border-t border-slate-800/40">
+                                <span class="text-xs font-bold text-slate-300 block">Bộ Lọc Kỹ Thuật & Vĩ Mô</span>
+                                <div id="filter-rows-container" class="space-y-2"></div>
                             </div>
                         </div>
                     </div>
@@ -462,7 +237,7 @@
                         <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-800/60">
                             <div class="flex items-center space-x-2">
                                 <i data-lucide="gauge" class="w-5 h-5 text-emerald-400"></i>
-                                <h2 class="font-bold text-base text-slate-200">Biểu Đồ Sức Mạnh Tương Đối (Tích lũy từ 6 khung thời gian)</h2>
+                                <h2 class="font-bold text-base text-slate-200">Biểu Đồ Sức Mạnh Tương Đối (6 khung thời gian)</h2>
                             </div>
                             <div class="flex items-center space-x-1">
                                 <button onclick="setChartType('bar')" id="btn-chart-bar" class="p-1 rounded bg-slate-800 text-indigo-400 text-xs font-semibold px-2">Cột</button>
@@ -470,14 +245,8 @@
                             </div>
                         </div>
 
-                        <!-- Grid: Charts Visual -->
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-                            <!-- Visual Progress Bars (7 cols) -->
-                            <div class="md:col-span-7 space-y-3" id="bars-container">
-                                <!-- Generated Dynamically in JS -->
-                            </div>
-                            
-                            <!-- ChartJS Canvas Container (5 cols) -->
+                            <div class="md:col-span-7 space-y-3" id="bars-container"></div>
                             <div class="md:col-span-5 flex items-center justify-center p-2 bg-slate-950/40 rounded-xl border border-slate-900 h-56 relative">
                                 <canvas id="strengthChart"></canvas>
                             </div>
@@ -492,14 +261,10 @@
                                 <h2 class="font-bold text-base text-slate-200">Danh Sách Cặp Tiền Đề Xuất Tối Ưu</h2>
                             </div>
                             <div class="text-[10px] text-slate-400 bg-slate-900 border border-slate-800 py-1 px-2.5 rounded-full font-bold">
-                                Tự động sắp xếp theo biên độ Gap lớn nhất
+                                Sắp xếp theo Gap lớn nhất
                             </div>
                         </div>
-
-                        <!-- Recommended Pairs container -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="recommended-pairs-list">
-                            <!-- Generated dynamically in JS -->
-                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="recommended-pairs-list"></div>
                     </div>
                 </div>
 
@@ -515,10 +280,8 @@
                             <i data-lucide="grid" class="w-5 h-5 text-indigo-400"></i>
                             Ma Trận Liên Kết Xu Hướng Chéo (28 Cặp Tiền)
                         </h2>
-                        <p class="text-xs text-slate-400">Biểu diễn chênh lệch điểm chéo tích lũy. Click trực tiếp vào một ô giao cắt để khởi tạo kế hoạch giao dịch nhanh.</p>
+                        <p class="text-xs text-slate-400">Chênh lệch điểm = điểm hàng − điểm cột. Nhấp vào một ô để lập kế hoạch giao dịch nhanh.</p>
                     </div>
-                    
-                    <!-- Color Legend -->
                     <div class="flex items-center space-x-4 text-xs font-semibold">
                         <span class="flex items-center space-x-1">
                             <span class="w-3 h-3 rounded bg-emerald-500/20 border border-emerald-500/50 block"></span>
@@ -535,7 +298,6 @@
                     </div>
                 </div>
 
-                <!-- 2D Matrix Grid Element -->
                 <div class="overflow-x-auto custom-scrollbar rounded-xl border border-slate-800 bg-slate-950/20 p-2">
                     <table class="w-full text-center border-collapse text-xs min-w-[700px]">
                         <thead>
@@ -551,9 +313,7 @@
                                 <th class="p-3 font-extrabold text-indigo-400 bg-slate-900/20 rounded-tr-lg">NZD</th>
                             </tr>
                         </thead>
-                        <tbody id="matrix-grid-body">
-                            <!-- Generated Dynamically in JS -->
-                        </tbody>
+                        <tbody id="matrix-grid-body"></tbody>
                     </table>
                 </div>
             </div>
@@ -562,7 +322,6 @@
         <!-- TAB 3: WEEKLY ARCHIVES -->
         <div id="tab-archives" class="hidden space-y-6">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <!-- Archive Sidebar (4 cols) -->
                 <div class="lg:col-span-4 space-y-4">
                     <div class="glass-panel rounded-2xl p-5 border-slate-800">
                         <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-800/60">
@@ -575,28 +334,23 @@
                                 <span>Lưu Bản Mới</span>
                             </button>
                         </div>
-
-                        <!-- Date selection -->
-                        <div class="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-1" id="saved-weeks-list">
-                            <!-- Generated dynamically in JS -->
+                        <div class="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-1" id="saved-weeks-list"></div>
+                        <div class="mt-4 pt-3 border-t border-slate-800/60 flex space-x-2">
+                            <button onclick="exportAllData()" class="flex-1 py-2 rounded-lg text-[10px] font-bold text-slate-300 bg-slate-900 hover:bg-slate-800 border border-slate-800 transition-all flex items-center justify-center space-x-1">
+                                <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-400"></i>
+                                <span>Sao Lưu (JSON)</span>
+                            </button>
+                            <label class="flex-1 py-2 rounded-lg text-[10px] font-bold text-slate-300 bg-slate-900 hover:bg-slate-800 border border-slate-800 transition-all flex items-center justify-center space-x-1 cursor-pointer">
+                                <i data-lucide="upload" class="w-3.5 h-3.5 text-cyan-400"></i>
+                                <span>Khôi Phục</span>
+                                <input type="file" accept=".json" class="hidden" onchange="importAllData(event)">
+                            </label>
                         </div>
                     </div>
                 </div>
 
-                <!-- Archive Content display (8 cols) -->
                 <div class="lg:col-span-8">
-                    <div class="glass-panel rounded-2xl p-6 border-slate-800 min-h-[400px] flex flex-col justify-between" id="archive-view-panel">
-                        <!-- Default empty state -->
-                        <div class="text-center py-20 my-auto text-slate-500 space-y-4">
-                            <div class="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center mx-auto text-slate-400 border border-slate-800">
-                                <i data-lucide="database" class="w-8 h-8"></i>
-                            </div>
-                            <div>
-                                <h3 class="text-slate-300 font-bold">Chưa Có Bản Ghi Lịch Sử Được Chọn</h3>
-                                <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">Vui lòng nhấp vào một bản ghi ở bên trái hoặc nhấp "Lưu Bản Mới" để lưu trạng thái chấm điểm hiện tại của bạn.</p>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="glass-panel rounded-2xl p-6 border-slate-800 min-h-[400px] flex flex-col justify-between" id="archive-view-panel"></div>
                 </div>
             </div>
         </div>
@@ -605,7 +359,7 @@
 
     <!-- Trade Planner Modal -->
     <div id="trade-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
-        <div class="glass-panel max-w-lg w-full rounded-2xl border-slate-800 shadow-2xl overflow-hidden">
+        <div class="glass-panel max-w-lg w-full rounded-2xl border-slate-800 shadow-2xl overflow-hidden max-h-[92vh] overflow-y-auto custom-scrollbar">
             <div class="p-5 border-b border-slate-800/80 flex items-center justify-between bg-slate-900/40">
                 <div class="flex items-center space-x-2.5">
                     <span class="text-lg" id="modal-pair-flag">🇪🇺 🇺🇸</span>
@@ -617,7 +371,6 @@
             </div>
 
             <div class="p-5 space-y-4">
-                <!-- Score Breakdown -->
                 <div class="grid grid-cols-2 gap-3 p-3 bg-slate-950/60 rounded-xl border border-slate-900">
                     <div>
                         <span class="text-[10px] text-slate-400 font-bold block">ĐỒNG TIỀN 1</span>
@@ -635,7 +388,6 @@
                     </div>
                 </div>
 
-                <!-- Parameters Form -->
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-1.5">
                         <label class="text-xs font-bold text-slate-400">Xu Hướng Đề Xuất</label>
@@ -651,16 +403,22 @@
                     <div class="grid grid-cols-3 gap-3">
                         <div class="space-y-1.5">
                             <label class="text-xs font-bold text-slate-400 block">Entry Point</label>
-                            <input id="plan-entry" type="text" placeholder="Ví dụ: 1.0850" class="w-full bg-slate-950 border border-slate-800 rounded-lg py-1.5 px-3 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none text-slate-200">
+                            <input id="plan-entry" type="text" inputmode="decimal" placeholder="1.0850" oninput="updateRRRatio()" class="w-full bg-slate-950 border border-slate-800 rounded-lg py-1.5 px-3 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none text-slate-200">
                         </div>
                         <div class="space-y-1.5">
                             <label class="text-xs font-bold text-slate-400 block">Stop Loss (SL)</label>
-                            <input id="plan-sl" type="text" placeholder="Ví dụ: 1.0810" class="w-full bg-slate-950 border border-slate-800 rounded-lg py-1.5 px-3 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none text-slate-200">
+                            <input id="plan-sl" type="text" inputmode="decimal" placeholder="1.0810" oninput="updateRRRatio()" class="w-full bg-slate-950 border border-slate-800 rounded-lg py-1.5 px-3 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none text-slate-200">
                         </div>
                         <div class="space-y-1.5">
                             <label class="text-xs font-bold text-slate-400 block">Take Profit (TP)</label>
-                            <input id="plan-tp" type="text" placeholder="Ví dụ: 1.0950" class="w-full bg-slate-950 border border-slate-800 rounded-lg py-1.5 px-3 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none text-slate-200">
+                            <input id="plan-tp" type="text" inputmode="decimal" placeholder="1.0950" oninput="updateRRRatio()" class="w-full bg-slate-950 border border-slate-800 rounded-lg py-1.5 px-3 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none text-slate-200">
                         </div>
+                    </div>
+
+                    <!-- Auto R:R calculation -->
+                    <div id="rr-display" class="hidden items-center justify-between p-2.5 bg-slate-950/60 rounded-lg border border-slate-800 text-xs">
+                        <span class="text-slate-400 font-semibold">Tỉ lệ Risk : Reward</span>
+                        <span id="rr-value" class="font-black text-slate-200">--</span>
                     </div>
 
                     <div class="space-y-1.5">
@@ -670,7 +428,6 @@
                 </div>
             </div>
 
-            <!-- Footer Buttons -->
             <div class="p-5 border-t border-slate-800/80 bg-slate-900/20 flex space-x-3">
                 <button onclick="closeTradeModal()" class="flex-1 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 transition-all border border-slate-800 hover:bg-slate-900">
                     Hủy Bỏ
@@ -683,92 +440,420 @@
         </div>
     </div>
 
-    <!-- AI Loading Overlay -->
-    <div id="ai-loading-modal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden items-center justify-center p-4">
-        <div class="glass-panel max-w-md w-full rounded-2xl border-slate-800 p-6 shadow-2xl text-center space-y-6">
-            <div class="relative w-24 h-24 mx-auto flex items-center justify-center">
-                <!-- Outer Spin Orbit -->
-                <div class="absolute inset-0 border-4 border-indigo-500/10 border-t-indigo-400 rounded-full animate-spin"></div>
-                <!-- Inner Spin Orbit Counter-clockwise -->
-                <div class="absolute inset-2 border-4 border-cyan-500/10 border-b-cyan-400 rounded-full animate-spin duration-1000" style="animation-direction: reverse;"></div>
-                <i data-lucide="sparkles" class="w-8 h-8 text-indigo-400 animate-pulse"></i>
+    <!-- Settings Modal (API config + data management) -->
+    <div id="settings-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="glass-panel max-w-lg w-full rounded-2xl border-slate-800 shadow-2xl overflow-hidden max-h-[92vh] overflow-y-auto custom-scrollbar">
+            <div class="p-5 border-b border-slate-800/80 flex items-center justify-between bg-slate-900/40">
+                <h3 class="font-extrabold text-base text-white flex items-center space-x-2">
+                    <i data-lucide="settings" class="w-5 h-5 text-indigo-400"></i>
+                    <span>Cài Đặt Kết Nối AI</span>
+                </h3>
+                <button onclick="closeSettingsModal()" class="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-200 transition-all">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
             </div>
-            <div>
-                <h3 class="font-extrabold text-lg text-white">AI Real-time Smart Scanner</h3>
-                <p class="text-xs text-slate-400 mt-2 leading-relaxed" id="ai-status-text">Đang kết nối tới trạm phân tích vệ tinh toàn cầu...</p>
+
+            <div class="p-5 space-y-4">
+                <div class="p-3 bg-amber-500/5 border border-amber-500/20 rounded-xl text-[11px] text-amber-200/90 leading-relaxed">
+                    <strong class="text-amber-300">Khuyến nghị bảo mật:</strong> Dùng <strong>Cloudflare Worker Proxy</strong> (như kv-gemini-proxy của bạn) để API key nằm trên server, không lộ trong trình duyệt. Chỉ nhập API key trực tiếp nếu file này chạy riêng tư trên máy cá nhân, không đăng lên web public.
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-xs font-bold text-slate-400 block">Proxy URL (ưu tiên — để trống nếu gọi trực tiếp)</label>
+                    <input id="cfg-proxy" type="text" placeholder="https://kv-gemini-proxy.kenvinzone.workers.dev" class="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none text-slate-200">
+                    <p class="text-[9px] text-slate-500">App sẽ POST tới <code class="text-indigo-400">{proxy}/v1beta/models/{model}:generateContent</code> — Worker tự gắn key.</p>
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-xs font-bold text-slate-400 block">Gemini API Key (chỉ khi không dùng proxy)</label>
+                    <input id="cfg-apikey" type="password" placeholder="AIza..." class="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none text-slate-200">
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="text-xs font-bold text-slate-400 block">Model</label>
+                    <input id="cfg-model" type="text" placeholder="gemini-2.0-flash" class="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 px-3 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none text-slate-200">
+                </div>
             </div>
-            <!-- Interactive visual fake console -->
-            <div class="bg-slate-950/80 border border-slate-900 rounded-lg p-3 text-left font-mono text-[9px] text-slate-400 h-32 overflow-y-auto custom-scrollbar space-y-1" id="ai-console-log">
-                <div>[SYSTEM] Initializing scraping protocols...</div>
+
+            <div class="p-5 border-t border-slate-800/80 bg-slate-900/20 flex space-x-3">
+                <button onclick="closeSettingsModal()" class="flex-1 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 transition-all border border-slate-800 hover:bg-slate-900">
+                    Đóng
+                </button>
+                <button onclick="saveSettings()" class="flex-1 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 transition-all text-white flex items-center justify-center space-x-1.5">
+                    <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                    <span>Lưu Cài Đặt</span>
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Custom Web App Script -->
+    <!-- AI Loading Overlay -->
+    <div id="ai-loading-modal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden items-center justify-center p-4">
+        <div class="glass-panel max-w-md w-full rounded-2xl border-slate-800 p-6 shadow-2xl text-center space-y-6">
+            <div class="relative w-24 h-24 mx-auto flex items-center justify-center">
+                <div class="absolute inset-0 border-4 border-indigo-500/10 border-t-indigo-400 rounded-full animate-spin"></div>
+                <div class="absolute inset-2 border-4 border-cyan-500/10 border-b-cyan-400 rounded-full animate-spin" style="animation-direction: reverse;"></div>
+                <i data-lucide="sparkles" class="w-8 h-8 text-indigo-400 animate-pulse"></i>
+            </div>
+            <div>
+                <h3 class="font-extrabold text-lg text-white">AI Ước Lượng Sức Mạnh Tiền Tệ</h3>
+                <p class="text-xs text-slate-400 mt-2 leading-relaxed" id="ai-status-text">Đang kết nối...</p>
+            </div>
+            <div class="bg-slate-950/80 border border-slate-900 rounded-lg p-3 text-left font-mono text-[9px] text-slate-400 h-32 overflow-y-auto custom-scrollbar space-y-1" id="ai-console-log"></div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-[60] space-y-2 max-w-xs w-full"></div>
+
+    <!-- Application Script -->
     <script>
-        // Core state model revised to integrate 6 distinct timeframes
-        // Max Positive Score: W1(3) + D1(2) + H4(1.5) + H1(1) + M15(0.5) + M5(0.5) + EMA(1) + RSI(1) + Sentiment(1) = 11.5
-        // Min Negative Score: -11.5
-        let currencies = [
-            { code: 'USD', name: 'Đô la Mỹ', flag: '🇺🇸', trendW1: 0, trendD1: 0, trendH4: 0, trendH1: 0, trendM15: 0, trendM5: 0, ema20: 0, rsi: 0, sentiment: 0, score: 0 },
-            { code: 'EUR', name: 'Euro', flag: '🇪🇺', trendW1: 0, trendD1: 0, trendH4: 0, trendH1: 0, trendM15: 0, trendM5: 0, ema20: 0, rsi: 0, sentiment: 0, score: 0 },
-            { code: 'GBP', name: 'Bảng Anh', flag: '🇬🇧', trendW1: 0, trendD1: 0, trendH4: 0, trendH1: 0, trendM15: 0, trendM5: 0, ema20: 0, rsi: 0, sentiment: 0, score: 0 },
-            { code: 'JPY', name: 'Yên Nhật', flag: '🇯🇵', trendW1: 0, trendD1: 0, trendH4: 0, trendH1: 0, trendM15: 0, trendM5: 0, ema20: 0, rsi: 0, sentiment: 0, score: 0 },
-            { code: 'AUD', name: 'Đô la Úc', flag: '🇦🇺', trendW1: 0, trendD1: 0, trendH4: 0, trendH1: 0, trendM15: 0, trendM5: 0, ema20: 0, rsi: 0, sentiment: 0, score: 0 },
-            { code: 'CAD', name: 'Đô la Canada', flag: '🇨🇦', trendW1: 0, trendD1: 0, trendH4: 0, trendH1: 0, trendM15: 0, trendM5: 0, ema20: 0, rsi: 0, sentiment: 0, score: 0 },
-            { code: 'CHF', name: 'Franc Thụy Sĩ', flag: '🇨🇭', trendW1: 0, trendD1: 0, trendH4: 0, trendH1: 0, trendM15: 0, trendM5: 0, ema20: 0, rsi: 0, sentiment: 0, score: 0 },
-            { code: 'NZD', name: 'Đô la New Zealand', flag: '🇳🇿', trendW1: 0, trendD1: 0, trendH4: 0, trendH1: 0, trendM15: 0, trendM5: 0, ema20: 0, rsi: 0, sentiment: 0, score: 0 }
+        'use strict';
+
+        /* ============================================================
+           KenvinZone Forex Matrix v3 — Production build
+           - Không hardcode API key (cấu hình qua Settings, ưu tiên proxy)
+           - Nguồn dữ liệu minh bạch: Thủ công / AI ước lượng / Demo
+           - Schema versioning + merge an toàn khi nâng cấp
+           - Sao lưu / khôi phục JSON, escape HTML, Clipboard API
+           ============================================================ */
+
+        const SCHEMA_VERSION = 3;
+        const LS_STATE_KEY = 'KenvinZone_forex_state_v3';
+        const LS_ARCHIVE_KEY = 'KenvinZone_forex_archives';
+        const LS_CONFIG_KEY = 'KenvinZone_forex_config';
+
+        // Định nghĩa 6 khung thời gian (nguồn duy nhất — sinh UI + tính điểm từ đây)
+        const TIMEFRAMES = [
+            { key: 'trendW1',  label: 'W1',  name: 'Khung Tuần',    weight: 3   },
+            { key: 'trendD1',  label: 'D1',  name: 'Khung Ngày',    weight: 2   },
+            { key: 'trendH4',  label: 'H4',  name: 'Khung 4 Giờ',   weight: 1.5 },
+            { key: 'trendH1',  label: 'H1',  name: 'Khung 1 Giờ',   weight: 1   },
+            { key: 'trendM15', label: 'M15', name: 'Khung 15 Phút', weight: 0.5 },
+            { key: 'trendM5',  label: 'M5',  name: 'Khung 5 Phút',  weight: 0.5 }
+        ];
+        const FILTERS = [
+            { key: 'ema20',     title: 'Đường EMA 20',   desc: 'Giá hiện tại nằm trên hay dưới MA?',          icon: 'git-commit', color: 'blue',   negLabel: 'Dưới MA (-1)',  posLabel: 'Trên MA (+1)' },
+            { key: 'rsi',       title: 'Chỉ số RSI (14)', desc: 'RSI > 50 (Mạnh) hay < 50 (Yếu)',              icon: 'activity',   color: 'purple', negLabel: 'RSI < 50 (-1)', posLabel: 'RSI > 50 (+1)' },
+            { key: 'sentiment', title: 'Tin Tức & Vĩ Mô', desc: 'Tâm lý truyền thông, COT & tin cơ bản',       icon: 'newspaper',  color: 'amber',  negLabel: 'Tiêu Cực (-1)', posLabel: 'Tích Cực (+1)' }
+        ];
+        const ALL_KEYS = [...TIMEFRAMES.map(t => t.key), ...FILTERS.map(f => f.key)];
+        const MAX_SCORE = TIMEFRAMES.reduce((s, t) => s + t.weight, 0) + FILTERS.length; // 11.5
+
+        const CURRENCY_DEFS = [
+            { code: 'USD', name: 'Đô la Mỹ',           flag: '🇺🇸' },
+            { code: 'EUR', name: 'Euro',                flag: '🇪🇺' },
+            { code: 'GBP', name: 'Bảng Anh',            flag: '🇬🇧' },
+            { code: 'JPY', name: 'Yên Nhật',            flag: '🇯🇵' },
+            { code: 'AUD', name: 'Đô la Úc',            flag: '🇦🇺' },
+            { code: 'CAD', name: 'Đô la Canada',        flag: '🇨🇦' },
+            { code: 'CHF', name: 'Franc Thụy Sĩ',       flag: '🇨🇭' },
+            { code: 'NZD', name: 'Đô la New Zealand',   flag: '🇳🇿' }
         ];
 
+        const STANDARD_PAIRS = [
+            'EURUSD','GBPUSD','AUDUSD','NZDUSD','USDJPY','USDCHF','USDCAD',
+            'EURJPY','GBPJPY','EURGBP','EURCHF','EURCAD','EURAUD','EURNZD',
+            'GBPCHF','GBPAUD','GBPCAD','GBPNZD','AUDJPY','AUDCAD','AUDCHF',
+            'AUDNZD','NZDJPY','NZDCAD','NZDCHF','CADJPY','CADCHF','CHFJPY'
+        ];
+
+        // ---------------- State ----------------
+        let currencies = [];
+        let dataMeta = { source: null, updatedAt: null }; // source: 'manual' | 'ai' | 'demo'
         let selectedCurrency = 'USD';
         let chartInstance = null;
-        let activeChartType = 'bar'; // 'bar' or 'radar'
+        let activeChartType = 'bar';
         let currentEditingPair = {};
 
-        // Helper for seeded pseudo-random calculations to stop random jumps on button clicks
-        function getSeededValue(seedStr, offset) {
-            let hash = 0;
-            const combinedStr = seedStr + String(offset);
-            for (let i = 0; i < combinedStr.length; i++) {
-                hash = combinedStr.charCodeAt(i) + ((hash << 5) - hash);
-            }
-            const x = Math.sin(hash) * 10000;
-            return x - Math.floor(x); // Returns 0 to 1
+        function freshCurrency(def) {
+            const c = { code: def.code, name: def.name, flag: def.flag, score: 0 };
+            ALL_KEYS.forEach(k => c[k] = 0);
+            return c;
         }
 
-        // Load data on start
-        window.onload = function() {
+        // ---------------- Helpers ----------------
+        function escapeHtml(str) {
+            return String(str ?? '')
+                .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+        }
+
+        function fmtScore(v) { return (v > 0 ? '+' : '') + Number(v).toFixed(1); }
+
+        function fmtDateTime(ts) {
+            if (!ts) return '--';
+            const d = new Date(ts);
+            const p = n => String(n).padStart(2, '0');
+            return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+        }
+
+        async function copyToClipboard(text) {
+            try {
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(text);
+                    return true;
+                }
+            } catch (e) { /* fallback below */ }
+            try {
+                const el = document.createElement('textarea');
+                el.value = text;
+                el.style.position = 'fixed'; el.style.opacity = '0';
+                document.body.appendChild(el);
+                el.select();
+                const ok = document.execCommand('copy');
+                document.body.removeChild(el);
+                return ok;
+            } catch (e) { return false; }
+        }
+
+        function toast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const colors = {
+                success: 'border-emerald-500/40 text-emerald-300',
+                error:   'border-rose-500/40 text-rose-300',
+                info:    'border-indigo-500/40 text-indigo-300',
+                warning: 'border-amber-500/40 text-amber-300'
+            };
+            const icons = { success: 'check-circle', error: 'x-circle', info: 'info', warning: 'alert-triangle' };
+            const el = document.createElement('div');
+            el.className = `toast-item glass-panel rounded-xl px-4 py-3 text-xs font-semibold flex items-center space-x-2 border ${colors[type] || colors.info}`;
+            el.innerHTML = `<i data-lucide="${icons[type] || 'info'}" class="w-4 h-4 flex-shrink-0"></i><span>${escapeHtml(message)}</span>`;
+            container.appendChild(el);
             lucide.createIcons();
-            loadLocalStorageData();
+            setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; setTimeout(() => el.remove(), 350); }, 3500);
+        }
+
+        // ---------------- Persistence ----------------
+        function saveState() {
+            try {
+                localStorage.setItem(LS_STATE_KEY, JSON.stringify({ version: SCHEMA_VERSION, currencies, dataMeta }));
+            } catch (e) { console.error('saveState failed', e); }
+        }
+
+        function loadState() {
+            currencies = CURRENCY_DEFS.map(freshCurrency);
+            // Merge dữ liệu cũ (kể cả bản v2 cũ) một cách an toàn — field thiếu giữ mặc định 0, không sinh NaN
+            const tryMerge = (arr) => {
+                if (!Array.isArray(arr)) return;
+                arr.forEach(old => {
+                    const cur = currencies.find(c => c.code === old.code);
+                    if (!cur) return;
+                    ALL_KEYS.forEach(k => {
+                        const v = Number(old[k]);
+                        if (Number.isFinite(v)) cur[k] = v;
+                    });
+                });
+            };
+            try {
+                const raw = localStorage.getItem(LS_STATE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    tryMerge(parsed.currencies);
+                    if (parsed.dataMeta) dataMeta = parsed.dataMeta;
+                    return;
+                }
+                // Di trú từ bản v2 cũ nếu có
+                const legacy = localStorage.getItem('KenvinZone_forex_temp');
+                if (legacy) {
+                    tryMerge(JSON.parse(legacy));
+                    dataMeta = { source: 'manual', updatedAt: null };
+                }
+            } catch (e) { console.error('loadState failed', e); }
+        }
+
+        function getConfig() {
+            try { return JSON.parse(localStorage.getItem(LS_CONFIG_KEY) || '{}'); }
+            catch (e) { return {}; }
+        }
+
+        function getArchives() {
+            try { return JSON.parse(localStorage.getItem(LS_ARCHIVE_KEY) || '[]'); }
+            catch (e) { return []; }
+        }
+        function setArchives(arr) { localStorage.setItem(LS_ARCHIVE_KEY, JSON.stringify(arr)); }
+
+        // ---------------- Score ----------------
+        function calculateScores() {
+            currencies.forEach(c => {
+                c.score = ALL_KEYS.reduce((sum, k) => sum + (Number(c[k]) || 0), 0);
+            });
+            saveState();
+        }
+
+        function scoredCount() {
+            return currencies.filter(c => ALL_KEYS.some(k => c[k] !== 0)).length;
+        }
+
+        // ---------------- Init ----------------
+        window.onload = function() {
+            loadState();
             calculateScores();
+            buildCurrencyTabs();
+            buildTrendRows();
+            buildFilterRows();
             updateLiveTime();
+            refreshAll();
+            initChart();
+            renderArchivesList();
+            renderArchiveEmptyState();
+            lucide.createIcons();
+            setInterval(updateLiveTime, 60000);
+            // Cập nhật banner "độ tươi" mỗi phút
+            setInterval(updateDataSourceBanner, 60000);
+            // Esc đóng modal
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') { closeTradeModal(); closeSettingsModal(); }
+            });
+        };
+
+        function refreshAll() {
+            calculateScores();
             updateCurrencyUI();
             updateStats();
             renderBars();
-            initChart();
+            updateChartData();
             renderRecommendedPairs();
             renderMatrix();
-            renderArchivesList();
-            
-            // Set dynamic updates for time
-            setInterval(updateLiveTime, 60000);
+            updateDataSourceBanner();
+            updateCompletenessBanner();
         }
 
-        // Live Clock logic
         function updateLiveTime() {
             const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
-            const date = new Date();
-            const dayName = days[date.getDay()];
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            const dateString = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
-            document.getElementById('live-time').innerText = `${dayName}, ${hours}:${minutes} (${dateString})`;
+            const d = new Date();
+            const p = n => String(n).padStart(2, '0');
+            document.getElementById('live-time').innerText =
+                `${days[d.getDay()]}, ${p(d.getHours())}:${p(d.getMinutes())} (${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()})`;
         }
 
-        // Switch Screen tab logic
+        // ---------------- Banners (nguồn dữ liệu + độ đầy đủ) ----------------
+        function updateDataSourceBanner() {
+            const el = document.getElementById('data-source-banner');
+            if (!dataMeta.source) { el.classList.add('hidden'); el.innerHTML = ''; return; }
+
+            const ageMs = dataMeta.updatedAt ? Date.now() - dataMeta.updatedAt : null;
+            const ageHours = ageMs !== null ? ageMs / 3600000 : null;
+            const stale = ageHours !== null && ageHours >= 8;
+
+            let cfg;
+            if (dataMeta.source === 'demo') {
+                cfg = {
+                    cls: 'bg-rose-500/10 border-rose-500/40 text-rose-300',
+                    icon: 'alert-octagon',
+                    text: '<strong>DỮ LIỆU DEMO (ngẫu nhiên)</strong> — chỉ dùng để xem giao diện. TUYỆT ĐỐI KHÔNG dùng để vào lệnh thật.'
+                };
+            } else if (dataMeta.source === 'ai') {
+                cfg = {
+                    cls: 'bg-amber-500/10 border-amber-500/30 text-amber-200',
+                    icon: 'sparkles',
+                    text: `<strong>AI ước lượng</strong> lúc ${fmtDateTime(dataMeta.updatedAt)} — đây là đánh giá tham khảo của mô hình AI, cần đối chiếu trực tiếp trên chart trước khi giao dịch.`
+                };
+            } else {
+                cfg = {
+                    cls: stale ? 'bg-amber-500/10 border-amber-500/30 text-amber-200' : 'bg-emerald-500/5 border-emerald-500/20 text-emerald-300/90',
+                    icon: stale ? 'clock' : 'user-check',
+                    text: `<strong>Chấm điểm thủ công</strong> — cập nhật lần cuối: ${fmtDateTime(dataMeta.updatedAt)}${stale ? ' · <strong>Dữ liệu đã cũ hơn 8 giờ, nên chấm lại trước khi vào lệnh.</strong>' : ''}`
+                };
+            }
+
+            el.className = `mb-4 flex items-center space-x-2.5 rounded-xl border px-4 py-2.5 text-xs font-medium ${cfg.cls}`;
+            el.innerHTML = `<i data-lucide="${cfg.icon}" class="w-4 h-4 flex-shrink-0"></i><span>${cfg.text}</span>`;
+            el.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function updateCompletenessBanner() {
+            const el = document.getElementById('completeness-banner');
+            const n = scoredCount();
+            document.getElementById('scored-count').innerText = `${n}/8`;
+            document.getElementById('scoring-dots').innerHTML = currencies
+                .map(c => `<span class="${ALL_KEYS.some(k => c[k] !== 0) ? 'text-emerald-400' : 'text-slate-700'}" title="${c.code}">●</span>`)
+                .join(' ');
+
+            if (n > 0 && n < 8) {
+                el.className = 'mb-4 flex items-center space-x-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-xs font-medium text-amber-200';
+                el.innerHTML = `<i data-lucide="alert-triangle" class="w-4 h-4 flex-shrink-0"></i><span>Mới chấm điểm <strong>${n}/8</strong> đồng tiền — khuyến nghị cặp bên dưới CHƯA đáng tin cậy vì các đồng chưa chấm đang mặc định 0 điểm.</span>`;
+                el.classList.remove('hidden');
+                lucide.createIcons();
+            } else {
+                el.classList.add('hidden');
+                el.innerHTML = '';
+            }
+        }
+
+        // ---------------- Build UI (DRY) ----------------
+        function buildCurrencyTabs() {
+            const row = document.getElementById('currency-tabs-row');
+            row.innerHTML = CURRENCY_DEFS.map(c =>
+                `<button onclick="selectCurrencyTab('${c.code}')" id="cur-tab-${c.code}" class="flex-1 min-w-[50px] py-2 rounded-lg text-xs font-bold text-center transition-all text-slate-400 hover:text-slate-200">${c.code}</button>`
+            ).join('');
+            applyTabStyles();
+        }
+
+        function applyTabStyles() {
+            CURRENCY_DEFS.forEach(c => {
+                const tab = document.getElementById(`cur-tab-${c.code}`);
+                if (!tab) return;
+                tab.className = c.code === selectedCurrency
+                    ? 'flex-1 min-w-[50px] py-2 rounded-lg text-xs font-bold text-center transition-all bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
+                    : 'flex-1 min-w-[50px] py-2 rounded-lg text-xs font-bold text-center transition-all text-slate-400 hover:text-slate-200';
+            });
+        }
+
+        function buildTrendRows() {
+            const container = document.getElementById('trend-rows-container');
+            container.innerHTML = TIMEFRAMES.map(tf => {
+                const w = tf.weight;
+                const wStr = Number.isInteger(w) ? w : w.toFixed(1);
+                return `
+                <div class="space-y-1">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-slate-300 flex items-center space-x-1">
+                            <span class="px-1.5 py-0.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded text-[9px] font-extrabold uppercase">${tf.label}</span>
+                            <span>${tf.name}</span>
+                        </span>
+                        <span class="text-slate-500 text-[9px] font-medium">Trọng số: ${wStr}đ</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="setIndicator('${tf.key}', ${-w})" id="btn-${tf.key}-bearish" class="py-1 px-2.5 rounded-lg text-xs font-semibold border transition-all flex items-center justify-center gap-1">
+                            <i data-lucide="trending-down" class="w-3 h-3 text-rose-400"></i><span>Bearish (${-w})</span>
+                        </button>
+                        <button onclick="setIndicator('${tf.key}', 0)" id="btn-${tf.key}-neutral" class="py-1 px-2.5 rounded-lg text-xs font-semibold border transition-all flex items-center justify-center gap-1">
+                            <i data-lucide="minus" class="w-3 h-3 text-slate-400"></i><span>Neutral</span>
+                        </button>
+                        <button onclick="setIndicator('${tf.key}', ${w})" id="btn-${tf.key}-bullish" class="py-1 px-2.5 rounded-lg text-xs font-semibold border transition-all flex items-center justify-center gap-1">
+                            <i data-lucide="trending-up" class="w-3 h-3 text-emerald-400"></i><span>Bullish (+${wStr})</span>
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function buildFilterRows() {
+            const container = document.getElementById('filter-rows-container');
+            container.innerHTML = FILTERS.map(f => `
+                <div class="flex items-center justify-between p-2.5 bg-slate-950/40 rounded-lg border border-slate-800/60">
+                    <div class="flex items-center space-x-2.5">
+                        <div class="p-1.5 rounded bg-${f.color}-500/10 text-${f.color}-400">
+                            <i data-lucide="${f.icon}" class="w-3.5 h-3.5"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-200">${f.title}</p>
+                            <p class="text-[9px] text-slate-400">${f.desc}</p>
+                        </div>
+                    </div>
+                    <div class="flex bg-slate-900 rounded p-0.5 border border-slate-800">
+                        <button onclick="setIndicator('${f.key}', -1)" id="btn-${f.key}-neg" class="px-2 py-1 text-[10px] font-bold rounded transition-all">${f.negLabel}</button>
+                        <button onclick="setIndicator('${f.key}', 1)" id="btn-${f.key}-pos" class="px-2 py-1 text-[10px] font-bold rounded transition-all">${f.posLabel}</button>
+                    </div>
+                </div>`
+            ).join('');
+        }
+
+        // ---------------- Interactions ----------------
         function switchTab(tabId) {
-            const tabs = ['dashboard', 'matrix', 'archives'];
-            tabs.forEach(t => {
+            ['dashboard', 'matrix', 'archives'].forEach(t => {
                 const element = document.getElementById(`tab-${t}`);
                 const btn = document.getElementById(`btn-tab-${t}`);
                 if (t === tabId) {
@@ -781,90 +866,37 @@
                     btn.classList.add('text-slate-400');
                 }
             });
-
-            // Re-render chart if navigating back to dashboard
-            if (tabId === 'dashboard') {
-                setTimeout(() => {
-                    initChart();
-                }, 100);
-            }
+            if (tabId === 'dashboard') setTimeout(initChart, 100);
         }
 
-        // Selected currency actions
         function selectCurrencyTab(code) {
-            // Remove previous active classes
-            currencies.forEach(c => {
-                const tab = document.getElementById(`cur-tab-${c.code}`);
-                if (tab) {
-                    tab.className = "flex-1 min-w-[50px] py-2 rounded-lg text-xs font-bold text-center transition-all text-slate-400 hover:text-slate-200";
-                }
-            });
-
-            // Set current active
-            const activeTab = document.getElementById(`cur-tab-${code}`);
-            if (activeTab) {
-                activeTab.className = "flex-1 min-w-[50px] py-2 rounded-lg text-xs font-bold text-center transition-all bg-indigo-600/20 text-indigo-300 border border-indigo-500/30";
-            }
-
             selectedCurrency = code;
+            applyTabStyles();
             updateCurrencyUI();
         }
 
-        // Calculate currency score based on checked indicators (Updated for 6 distinct rows)
-        function calculateScores() {
-            currencies.forEach(c => {
-                // Formula: trendW1 + trendD1 + trendH4 + trendH1 + trendM15 + trendM5 + ema20 + rsi + sentiment
-                // Range: Max +11.5, Min -11.5
-                c.score = c.trendW1 + c.trendD1 + c.trendH4 + c.trendH1 + c.trendM15 + c.trendM5 + c.ema20 + c.rsi + c.sentiment;
-            });
-            saveToTempSession();
-        }
-
-        // Reset current active or all currencies
-        function resetAllFactors() {
-            currencies.forEach(c => {
-                c.trendW1 = 0;
-                c.trendD1 = 0;
-                c.trendH4 = 0;
-                c.trendH1 = 0;
-                c.trendM15 = 0;
-                c.trendM5 = 0;
-                c.ema20 = 0;
-                c.rsi = 0;
-                c.sentiment = 0;
-                c.score = 0;
-            });
-            calculateScores();
-            updateCurrencyUI();
-            updateStats();
-            renderBars();
-            updateChartData();
-            renderRecommendedPairs();
-            renderMatrix();
-        }
-
-        // Indicator Toggle logic
         function setIndicator(indicatorName, value) {
             const cur = currencies.find(c => c.code === selectedCurrency);
-            if (cur) {
-                // If it's the same value as currently selected (for 2-state filters), toggle to 0
-                if (indicatorName === 'ema20' || indicatorName === 'rsi' || indicatorName === 'sentiment') {
-                    cur[indicatorName] = cur[indicatorName] === value ? 0 : value;
-                } else {
-                    cur[indicatorName] = value;
-                }
-                
-                calculateScores();
-                updateCurrencyUI();
-                updateStats();
-                renderBars();
-                updateChartData();
-                renderRecommendedPairs();
-                renderMatrix();
+            if (!cur) return;
+            const isFilter = FILTERS.some(f => f.key === indicatorName);
+            if (isFilter) {
+                cur[indicatorName] = cur[indicatorName] === value ? 0 : value; // nhấp lại để bỏ chọn
+            } else {
+                cur[indicatorName] = value;
             }
+            dataMeta = { source: 'manual', updatedAt: Date.now() };
+            refreshAll();
         }
 
-        // Update indicators visual look on the dashboard inputs panel (Refactored for 6 rows)
+        function resetAllFactors() {
+            if (!confirm('Xóa toàn bộ điểm số của cả 8 đồng tiền?')) return;
+            currencies = CURRENCY_DEFS.map(freshCurrency);
+            dataMeta = { source: null, updatedAt: null };
+            refreshAll();
+            toast('Đã reset toàn bộ bảng điểm.', 'info');
+        }
+
+        // ---------------- Render: active currency panel ----------------
         function updateCurrencyUI() {
             const cur = currencies.find(c => c.code === selectedCurrency);
             if (!cur) return;
@@ -872,158 +904,95 @@
             document.getElementById('active-flag').innerText = cur.flag;
             document.getElementById('active-code').innerText = cur.code;
             document.getElementById('active-name').innerText = cur.name;
-            
-            // Format score sign
-            let scoreStr = cur.score > 0 ? `+${cur.score.toFixed(1)}` : cur.score.toFixed(1);
-            document.getElementById('active-score').innerText = scoreStr;
-            
-            // Color grading active score
+
             const scoreEl = document.getElementById('active-score');
-            if (cur.score > 0) {
-                scoreEl.className = "text-2xl font-black bg-gradient-to-r from-emerald-400 to-indigo-400 bg-clip-text text-transparent";
-            } else if (cur.score < 0) {
-                scoreEl.className = "text-2xl font-black bg-gradient-to-r from-rose-400 to-orange-400 bg-clip-text text-transparent";
-            } else {
-                scoreEl.className = "text-2xl font-black text-slate-400";
-            }
+            scoreEl.innerText = fmtScore(cur.score);
+            if (cur.score > 0) scoreEl.className = 'text-2xl font-black bg-gradient-to-r from-emerald-400 to-indigo-400 bg-clip-text text-transparent';
+            else if (cur.score < 0) scoreEl.className = 'text-2xl font-black bg-gradient-to-r from-rose-400 to-orange-400 bg-clip-text text-transparent';
+            else scoreEl.className = 'text-2xl font-black text-slate-400';
 
-            // 1. W1 Row Buttons style matching
-            resetBtnStyles(['btn-w1-bearish', 'btn-w1-neutral', 'btn-w1-bullish']);
-            if (cur.trendW1 === -3) setBtnStyleActive('btn-w1-bearish', 'rose');
-            else if (cur.trendW1 === 3) setBtnStyleActive('btn-w1-bullish', 'emerald');
-            else setBtnStyleActive('btn-w1-neutral', 'indigo');
+            // Trend rows
+            TIMEFRAMES.forEach(tf => {
+                resetBtnStyles([`btn-${tf.key}-bearish`, `btn-${tf.key}-neutral`, `btn-${tf.key}-bullish`]);
+                if (cur[tf.key] < 0) setBtnStyleActive(`btn-${tf.key}-bearish`, 'rose');
+                else if (cur[tf.key] > 0) setBtnStyleActive(`btn-${tf.key}-bullish`, 'emerald');
+                else setBtnStyleActive(`btn-${tf.key}-neutral`, 'indigo');
+            });
 
-            // 2. D1 Row Buttons style matching
-            resetBtnStyles(['btn-d1-bearish', 'btn-d1-neutral', 'btn-d1-bullish']);
-            if (cur.trendD1 === -2) setBtnStyleActive('btn-d1-bearish', 'rose');
-            else if (cur.trendD1 === 2) setBtnStyleActive('btn-d1-bullish', 'emerald');
-            else setBtnStyleActive('btn-d1-neutral', 'indigo');
-
-            // 3. H4 Row Buttons style matching
-            resetBtnStyles(['btn-h4-bearish', 'btn-h4-neutral', 'btn-h4-bullish']);
-            if (cur.trendH4 === -1.5) setBtnStyleActive('btn-h4-bearish', 'rose');
-            else if (cur.trendH4 === 1.5) setBtnStyleActive('btn-h4-bullish', 'emerald');
-            else setBtnStyleActive('btn-h4-neutral', 'indigo');
-
-            // 4. H1 Row Buttons style matching
-            resetBtnStyles(['btn-h1-bearish', 'btn-h1-neutral', 'btn-h1-bullish']);
-            if (cur.trendH1 === -1) setBtnStyleActive('btn-h1-bearish', 'rose');
-            else if (cur.trendH1 === 1) setBtnStyleActive('btn-h1-bullish', 'emerald');
-            else setBtnStyleActive('btn-h1-neutral', 'indigo');
-
-            // 5. M15 Row Buttons style matching
-            resetBtnStyles(['btn-m15-bearish', 'btn-m15-neutral', 'btn-m15-bullish']);
-            if (cur.trendM15 === -0.5) setBtnStyleActive('btn-m15-bearish', 'rose');
-            else if (cur.trendM15 === 0.5) setBtnStyleActive('btn-m15-bullish', 'emerald');
-            else setBtnStyleActive('btn-m15-neutral', 'indigo');
-
-            // 6. M5 Row Buttons style matching
-            resetBtnStyles(['btn-m5-bearish', 'btn-m5-neutral', 'btn-m5-bullish']);
-            if (cur.trendM5 === -0.5) setBtnStyleActive('btn-m5-bearish', 'rose');
-            else if (cur.trendM5 === 0.5) setBtnStyleActive('btn-m5-bullish', 'emerald');
-            else setBtnStyleActive('btn-m5-neutral', 'indigo');
-
-            // Update technical filters styles (2-state button layout)
-            // EMA 20
-            resetBtnStyles(['btn-ema-below', 'btn-ema-above']);
-            if (cur.ema20 === -1) {
-                setBtnStyleActive('btn-ema-below', 'rose');
-            } else if (cur.ema20 === 1) {
-                setBtnStyleActive('btn-ema-above', 'emerald');
-            }
-
-            // RSI
-            resetBtnStyles(['btn-rsi-below', 'btn-rsi-above']);
-            if (cur.rsi === -1) {
-                setBtnStyleActive('btn-rsi-below', 'rose');
-            } else if (cur.rsi === 1) {
-                setBtnStyleActive('btn-rsi-above', 'emerald');
-            }
-
-            // Sentiment
-            resetBtnStyles(['btn-sent-bearish', 'btn-sent-bullish']);
-            if (cur.sentiment === -1) {
-                setBtnStyleActive('btn-sent-bearish', 'rose');
-            } else if (cur.sentiment === 1) {
-                setBtnStyleActive('btn-sent-bullish', 'emerald');
-            }
-        }
-
-        // Quick helper styling states for interactive factor buttons
-        function resetBtnStyles(ids) {
-            ids.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) {
-                    el.className = "py-1 px-2.5 rounded-lg text-xs font-semibold border transition-all flex items-center justify-center gap-1 border-slate-800 bg-slate-950/50 text-slate-400 hover:border-slate-700 hover:text-slate-200";
-                }
+            // Filters (2 trạng thái, có thể bỏ chọn)
+            FILTERS.forEach(f => {
+                resetFilterBtnStyles([`btn-${f.key}-neg`, `btn-${f.key}-pos`]);
+                if (cur[f.key] === -1) setFilterBtnActive(`btn-${f.key}-neg`, 'rose');
+                else if (cur[f.key] === 1) setFilterBtnActive(`btn-${f.key}-pos`, 'emerald');
             });
         }
 
+        function resetBtnStyles(ids) {
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.className = 'py-1 px-2.5 rounded-lg text-xs font-semibold border transition-all flex items-center justify-center gap-1 border-slate-800 bg-slate-950/50 text-slate-400 hover:border-slate-700 hover:text-slate-200';
+            });
+        }
         function setBtnStyleActive(id, colorType) {
             const el = document.getElementById(id);
             if (!el) return;
-            
-            // Clear default non-active classes
-            el.className = "py-1 px-2.5 rounded-lg text-xs font-extrabold border transition-all flex items-center justify-center gap-1";
-
-            if (colorType === 'emerald') {
-                el.classList.add('bg-emerald-500/10', 'border-emerald-500/50', 'text-emerald-400');
-            } else if (colorType === 'rose') {
-                el.classList.add('bg-rose-500/10', 'border-rose-500/50', 'text-rose-400');
-            } else if (colorType === 'indigo') {
-                el.classList.add('bg-indigo-500/10', 'border-indigo-500/50', 'text-indigo-400');
-            }
+            el.className = 'py-1 px-2.5 rounded-lg text-xs font-extrabold border transition-all flex items-center justify-center gap-1';
+            const map = {
+                emerald: ['bg-emerald-500/10', 'border-emerald-500/50', 'text-emerald-400'],
+                rose:    ['bg-rose-500/10', 'border-rose-500/50', 'text-rose-400'],
+                indigo:  ['bg-indigo-500/10', 'border-indigo-500/50', 'text-indigo-400']
+            };
+            el.classList.add(...(map[colorType] || map.indigo));
+        }
+        function resetFilterBtnStyles(ids) {
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.className = 'px-2 py-1 text-[10px] font-bold rounded transition-all text-slate-400 hover:text-slate-200';
+            });
+        }
+        function setFilterBtnActive(id, colorType) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.className = 'px-2 py-1 text-[10px] font-extrabold rounded transition-all';
+            if (colorType === 'emerald') el.classList.add('bg-emerald-500/15', 'text-emerald-400');
+            else el.classList.add('bg-rose-500/15', 'text-rose-400');
         }
 
-        // Update stats summary row at the top
+        // ---------------- Render: stats, bars, chart ----------------
         function updateStats() {
-            // Sort currencies to find strongest and weakest
+            const anyScored = scoredCount() > 0;
             const sorted = [...currencies].sort((a, b) => b.score - a.score);
             const strongest = sorted[0];
             const weakest = sorted[sorted.length - 1];
 
-            document.getElementById('stat-strongest-flag').innerText = strongest.flag;
-            document.getElementById('stat-strongest-code').innerText = strongest.code;
+            document.getElementById('stat-strongest-flag').innerText = anyScored ? strongest.flag : '--';
+            document.getElementById('stat-strongest-code').innerText = anyScored ? strongest.code : '---';
+            document.getElementById('stat-weakest-flag').innerText = anyScored ? weakest.flag : '--';
+            document.getElementById('stat-weakest-code').innerText = anyScored ? weakest.code : '---';
 
-            document.getElementById('stat-weakest-flag').innerText = weakest.flag;
-            document.getElementById('stat-weakest-code').innerText = weakest.code;
-
-            // Generate buy/sell recommendations based on absolute strengths
-            if (strongest.score > weakest.score) {
-                document.getElementById('stat-best-buy').innerText = `${strongest.code}${weakest.code}`;
-                document.getElementById('stat-best-sell').innerText = `${weakest.code}${strongest.code}`;
+            // Cặp Mua tốt nhất = cặp CHUẨN có gap dương lớn nhất; Cặp Bán tốt nhất = gap âm sâu nhất
+            if (anyScored) {
+                const pairs = getCrossPairs();
+                const bestBuy = pairs.reduce((a, b) => (b.rawGap > (a?.rawGap ?? -Infinity) ? b : a), null);
+                const bestSell = pairs.reduce((a, b) => (b.rawGap < (a?.rawGap ?? Infinity) ? b : a), null);
+                document.getElementById('stat-best-buy').innerText = bestBuy && bestBuy.rawGap >= 3 ? bestBuy.pair : '--';
+                document.getElementById('stat-best-sell').innerText = bestSell && bestSell.rawGap <= -3 ? bestSell.pair : '--';
             } else {
-                document.getElementById('stat-best-buy').innerText = `--`;
-                document.getElementById('stat-best-sell').innerText = `--`;
+                document.getElementById('stat-best-buy').innerText = '--';
+                document.getElementById('stat-best-sell').innerText = '--';
             }
         }
 
-        // Render detailed horizontal bar indicators
         function renderBars() {
             const container = document.getElementById('bars-container');
-            container.innerHTML = '';
-
-            // Render currencies sorted by strength index
             const sorted = [...currencies].sort((a, b) => b.score - a.score);
-
-            sorted.forEach(c => {
-                // Convert score (-11.5 to +11.5) to 0 to 100 percentage bar
-                const percent = ((c.score + 11.5) / 23) * 100;
-                
-                // Colors class based on score
-                let colorClass = "bg-gradient-to-r from-slate-500 to-indigo-500";
-                let textClass = "text-slate-400";
-                if (c.score > 0) {
-                    colorClass = "bg-gradient-to-r from-indigo-500 to-emerald-400";
-                    textClass = "text-emerald-400 font-bold";
-                } else if (c.score < 0) {
-                    colorClass = "bg-gradient-to-r from-rose-500 to-orange-400";
-                    textClass = "text-rose-400 font-bold";
-                }
-
-                const scoreStr = c.score > 0 ? `+${c.score.toFixed(1)}` : c.score.toFixed(1);
-
-                container.innerHTML += `
+            container.innerHTML = sorted.map(c => {
+                const percent = ((c.score + MAX_SCORE) / (2 * MAX_SCORE)) * 100;
+                let colorClass = 'bg-gradient-to-r from-slate-500 to-indigo-500';
+                let textClass = 'text-slate-400';
+                if (c.score > 0) { colorClass = 'bg-gradient-to-r from-indigo-500 to-emerald-400'; textClass = 'text-emerald-400 font-bold'; }
+                else if (c.score < 0) { colorClass = 'bg-gradient-to-r from-rose-500 to-orange-400'; textClass = 'text-rose-400 font-bold'; }
+                return `
                     <div class="space-y-1">
                         <div class="flex items-center justify-between text-xs">
                             <div class="flex items-center space-x-2">
@@ -1031,44 +1000,39 @@
                                 <span class="font-bold text-slate-200">${c.code}</span>
                                 <span class="text-[10px] text-slate-500 font-medium">${c.name}</span>
                             </div>
-                            <span class="${textClass}">${scoreStr}</span>
+                            <span class="${textClass}">${fmtScore(c.score)}</span>
                         </div>
                         <div class="w-full bg-slate-950 rounded-full h-2.5 overflow-hidden border border-slate-900 flex">
                             <div class="${colorClass} h-full rounded-full transition-all duration-500" style="width: ${percent}%"></div>
                         </div>
-                    </div>
-                `;
-            });
+                    </div>`;
+            }).join('');
         }
 
-        // Initialize or update Chart.js
         function setChartType(type) {
             activeChartType = type;
-            document.getElementById('btn-chart-bar').className = type === 'bar' ? "p-1 rounded bg-slate-800 text-indigo-400 text-xs font-semibold px-2" : "p-1 rounded hover:bg-slate-800 text-slate-400 text-xs font-semibold px-2";
-            document.getElementById('btn-chart-radar').className = type === 'radar' ? "p-1 rounded bg-slate-800 text-indigo-400 text-xs font-semibold px-2" : "p-1 rounded hover:bg-slate-800 text-slate-400 text-xs font-semibold px-2";
+            document.getElementById('btn-chart-bar').className = type === 'bar' ? 'p-1 rounded bg-slate-800 text-indigo-400 text-xs font-semibold px-2' : 'p-1 rounded hover:bg-slate-800 text-slate-400 text-xs font-semibold px-2';
+            document.getElementById('btn-chart-radar').className = type === 'radar' ? 'p-1 rounded bg-slate-800 text-indigo-400 text-xs font-semibold px-2' : 'p-1 rounded hover:bg-slate-800 text-slate-400 text-xs font-semibold px-2';
             initChart();
         }
 
         function initChart() {
-            if (chartInstance) {
-                chartInstance.destroy();
-            }
-
+            if (chartInstance) chartInstance.destroy();
             const ctx = document.getElementById('strengthChart').getContext('2d');
-            const sortedLabels = currencies.map(c => c.code);
+            const labels = currencies.map(c => c.code);
             const scoresData = currencies.map(c => c.score);
-
             const isRadar = activeChartType === 'radar';
+            const bound = Math.ceil(MAX_SCORE) + 1;
 
             chartInstance = new Chart(ctx, {
                 type: isRadar ? 'radar' : 'bar',
                 data: {
-                    labels: sortedLabels,
+                    labels,
                     datasets: [{
                         label: 'Sức Mạnh',
                         data: scoresData,
-                        backgroundColor: isRadar ? 'rgba(99, 102, 241, 0.2)' : scoresData.map(val => val >= 0 ? 'rgba(16, 185, 129, 0.7)' : 'rgba(244, 63, 94, 0.7)'),
-                        borderColor: isRadar ? '#6366f1' : scoresData.map(val => val >= 0 ? '#10b981' : '#f43f5e'),
+                        backgroundColor: isRadar ? 'rgba(99, 102, 241, 0.2)' : scoresData.map(v => v >= 0 ? 'rgba(16, 185, 129, 0.7)' : 'rgba(244, 63, 94, 0.7)'),
+                        borderColor: isRadar ? '#6366f1' : scoresData.map(v => v >= 0 ? '#10b981' : '#f43f5e'),
                         borderWidth: 2,
                         pointBackgroundColor: '#8b5cf6',
                         pointBorderColor: '#fff',
@@ -1078,15 +1042,14 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
+                    plugins: { legend: { display: false } },
                     scales: isRadar ? {
                         r: {
                             grid: { color: 'rgba(255, 255, 255, 0.05)' },
                             angleLines: { color: 'rgba(255, 255, 255, 0.05)' },
                             pointLabels: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 10, weight: 'bold' } },
-                            ticks: { display: false, stepSize: 3 }
+                            ticks: { display: false, stepSize: 3 },
+                            min: -bound, max: bound
                         }
                     } : {
                         x: {
@@ -1094,8 +1057,7 @@
                             ticks: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 9, weight: 'bold' } }
                         },
                         y: {
-                            min: -12,
-                            max: 12,
+                            min: -bound, max: bound,
                             grid: { color: 'rgba(255, 255, 255, 0.05)' },
                             ticks: { color: '#64748b', stepSize: 3, font: { family: 'Plus Jakarta Sans', size: 9 } }
                         }
@@ -1105,231 +1067,138 @@
         }
 
         function updateChartData() {
-            if (chartInstance) {
-                chartInstance.data.datasets[0].data = currencies.map(c => c.score);
-                if (activeChartType === 'bar') {
-                    chartInstance.data.datasets[0].backgroundColor = currencies.map(c => c.score >= 0 ? 'rgba(16, 185, 129, 0.7)' : 'rgba(244, 63, 94, 0.7)');
-                    chartInstance.data.datasets[0].borderColor = currencies.map(c => c.score >= 0 ? '#10b981' : '#f43f5e');
-                }
-                chartInstance.update();
+            if (!chartInstance) return;
+            chartInstance.data.datasets[0].data = currencies.map(c => c.score);
+            if (activeChartType === 'bar') {
+                chartInstance.data.datasets[0].backgroundColor = currencies.map(c => c.score >= 0 ? 'rgba(16, 185, 129, 0.7)' : 'rgba(244, 63, 94, 0.7)');
+                chartInstance.data.datasets[0].borderColor = currencies.map(c => c.score >= 0 ? '#10b981' : '#f43f5e');
             }
+            chartInstance.update();
         }
 
-        // Automatically analyze, compile and rank 28 major pairings
+        // ---------------- Pairing logic ----------------
+        function getStandardPairName(c1, c2) {
+            if (STANDARD_PAIRS.includes(`${c1}${c2}`)) return `${c1}${c2}`;
+            if (STANDARD_PAIRS.includes(`${c2}${c1}`)) return `${c2}${c1}`;
+            return `${c1}${c2}`;
+        }
+
         function getCrossPairs() {
-            let list = [];
-            // Major 8 currencies crossed
-            for (let i = 0; i < currencies.length; i++) {
-                for (let j = i + 1; j < currencies.length; j++) {
-                    const c1 = currencies[i];
-                    const c2 = currencies[j];
-                    
-                    // Cross 1 base/quote, score difference = Base Score - Quote Score
-                    // Standard pair list rules
-                    const standardPairs = [
-                        { base: 'EUR', quote: 'USD' }, { base: 'GBP', quote: 'USD' }, { base: 'AUD', quote: 'USD' }, { base: 'NZD', quote: 'USD' },
-                        { base: 'USD', quote: 'JPY' }, { base: 'USD', quote: 'CHF' }, { base: 'USD', quote: 'CAD' }, { base: 'EUR', quote: 'JPY' },
-                        { base: 'GBP', quote: 'JPY' }, { base: 'EUR', quote: 'GBP' }, { base: 'EUR', quote: 'CHF' }, { base: 'EUR', quote: 'CAD' },
-                        { base: 'EUR', quote: 'AUD' }, { base: 'EUR', quote: 'NZD' }, { base: 'GBP', quote: 'CHF' }, { base: 'GBP', quote: 'AUD' },
-                        { base: 'GBP', quote: 'CAD' }, { base: 'GBP', quote: 'NZD' }, { base: 'AUD', quote: 'JPY' }, { base: 'AUD', quote: 'CAD' },
-                        { base: 'AUD', quote: 'CHF' }, { base: 'AUD', quote: 'NZD' }, { base: 'NZD', quote: 'JPY' }, { base: 'NZD', quote: 'CAD' },
-                        { base: 'NZD', quote: 'CHF' }, { base: 'CAD', quote: 'JPY' }, { base: 'CAD', quote: 'CHF' }, { base: 'CHF', quote: 'JPY' }
-                    ];
+            const list = [];
+            STANDARD_PAIRS.forEach(pairName => {
+                const base = pairName.slice(0, 3);
+                const quote = pairName.slice(3);
+                const baseCur = currencies.find(c => c.code === base);
+                const quoteCur = currencies.find(c => c.code === quote);
+                if (!baseCur || !quoteCur) return;
+                const gap = baseCur.score - quoteCur.score;
 
-                    let match = standardPairs.find(p => (p.base === c1.code && p.quote === c2.code) || (p.base === c2.code && p.quote === c1.code));
-                    if (match) {
-                        const baseCur = currencies.find(c => c.code === match.base);
-                        const quoteCur = currencies.find(c => c.code === match.quote);
-                        const gap = baseCur.score - quoteCur.score; // Positive gap = Buy standard pair, Negative = Sell
-                        
-                        let recommendation = 'WATCHLIST';
-                        let badgeColor = 'bg-slate-900 border-slate-800 text-slate-400';
-                        
-                        // Adjusted thresholds for new score limits
-                        if (gap >= 7) {
-                            recommendation = 'STRONG BUY';
-                            badgeColor = 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400';
-                        } else if (gap >= 3) {
-                            recommendation = 'BUY';
-                            badgeColor = 'bg-teal-500/10 border-teal-500/30 text-teal-300';
-                        } else if (gap <= -7) {
-                            recommendation = 'STRONG SELL';
-                            badgeColor = 'bg-rose-500/10 border-rose-500/30 text-rose-400';
-                        } else if (gap <= -3) {
-                            recommendation = 'SELL';
-                            badgeColor = 'bg-amber-500/10 border-amber-500/30 text-amber-300';
-                        }
+                let recommendation = 'WATCHLIST';
+                let badgeColor = 'bg-slate-900 border-slate-800 text-slate-400';
+                if (gap >= 7)      { recommendation = 'STRONG BUY';  badgeColor = 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'; }
+                else if (gap >= 3) { recommendation = 'BUY';         badgeColor = 'bg-teal-500/10 border-teal-500/30 text-teal-300'; }
+                else if (gap <= -7){ recommendation = 'STRONG SELL'; badgeColor = 'bg-rose-500/10 border-rose-500/30 text-rose-400'; }
+                else if (gap <= -3){ recommendation = 'SELL';        badgeColor = 'bg-amber-500/10 border-amber-500/30 text-amber-300'; }
 
-                        list.push({
-                            pair: `${match.base}${match.quote}`,
-                            base: match.base,
-                            quote: match.quote,
-                            baseFlag: baseCur.flag,
-                            quoteFlag: quoteCur.flag,
-                            baseScore: baseCur.score,
-                            quoteScore: quoteCur.score,
-                            gap: Math.abs(gap),
-                            rawGap: gap,
-                            recommendation: recommendation,
-                            badgeColor: badgeColor
-                        });
-                    }
-                }
-            }
+                list.push({
+                    pair: pairName, base, quote,
+                    baseFlag: baseCur.flag, quoteFlag: quoteCur.flag,
+                    baseScore: baseCur.score, quoteScore: quoteCur.score,
+                    gap: Math.abs(gap), rawGap: gap,
+                    recommendation, badgeColor
+                });
+            });
             return list;
         }
 
-        // Render recommendation pairings list
         function renderRecommendedPairs() {
             const container = document.getElementById('recommended-pairs-list');
-            container.innerHTML = '';
-
-            const allPairs = getCrossPairs();
-            // Sort by absolute Gap to find extreme divergences
-            const sortedPairs = allPairs.sort((a, b) => b.gap - a.gap);
-
-            // Take the top 6 strongest opportunities
-            const topOps = sortedPairs.filter(p => p.recommendation.includes('STRONG') || p.recommendation === 'BUY' || p.recommendation === 'SELL').slice(0, 6);
+            const sortedPairs = getCrossPairs().sort((a, b) => b.gap - a.gap);
+            const topOps = sortedPairs.filter(p => p.recommendation !== 'WATCHLIST').slice(0, 6);
 
             if (topOps.length === 0) {
                 container.innerHTML = `
                     <div class="col-span-full text-center py-8 text-slate-500 text-xs">
-                        Không có xu hướng chênh lệch đủ lớn để khuyến nghị. Hãy click "AI Quét Tự Động" hoặc chấm điểm thủ công ở cột bên trái trước.
-                    </div>
-                `;
+                        Chưa có chênh lệch đủ lớn (≥3 điểm) để khuyến nghị. Hãy chấm điểm thủ công ở cột bên trái, hoặc dùng "AI Ước Lượng" làm điểm khởi đầu tham khảo.
+                    </div>`;
                 return;
             }
 
-            topOps.forEach(p => {
-                container.innerHTML += `
-                    <div onclick="openTradePlanner('${p.pair}')" class="bg-slate-900/30 hover:bg-indigo-950/20 p-4 rounded-xl border border-slate-800/80 hover:border-indigo-500/30 transition-all cursor-pointer flex flex-col justify-between space-y-3 group">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-2.5">
-                                <span class="text-xl">${p.baseFlag} ${p.quoteFlag}</span>
-                                <div>
-                                    <span class="font-extrabold text-slate-200 block group-hover:text-indigo-300 transition-colors">${p.pair}</span>
-                                    <span class="text-[9px] text-slate-500 font-medium">Gap: ${p.rawGap > 0 ? '+' : ''}${p.rawGap.toFixed(1)}đ</span>
-                                </div>
+            container.innerHTML = topOps.map(p => `
+                <div onclick="openTradePlanner('${p.pair}')" class="bg-slate-900/30 hover:bg-indigo-950/20 p-4 rounded-xl border border-slate-800/80 hover:border-indigo-500/30 transition-all cursor-pointer flex flex-col justify-between space-y-3 group">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2.5">
+                            <span class="text-xl">${p.baseFlag} ${p.quoteFlag}</span>
+                            <div>
+                                <span class="font-extrabold text-slate-200 block group-hover:text-indigo-300 transition-colors">${p.pair}</span>
+                                <span class="text-[9px] text-slate-500 font-medium">Gap: ${fmtScore(p.rawGap)}đ</span>
                             </div>
-                            <span class="py-1 px-2.5 rounded-lg text-[9px] font-extrabold border ${p.badgeColor}">
-                                ${p.recommendation}
-                            </span>
                         </div>
-                        
-                        <div class="flex items-center justify-between text-[10px] pt-1.5 border-t border-slate-800/40">
-                            <span class="text-slate-400">Động lượng lệch: <strong class="text-indigo-400">${p.gap.toFixed(1)}đ</strong></span>
-                            <span class="text-indigo-500 font-semibold flex items-center space-x-1 hover:underline">
-                                <span>Lập Kế Hoạch</span>
-                                <i data-lucide="arrow-right" class="w-3 h-3"></i>
-                            </span>
-                        </div>
+                        <span class="py-1 px-2.5 rounded-lg text-[9px] font-extrabold border ${p.badgeColor}">${p.recommendation}</span>
                     </div>
-                `;
-            });
+                    <div class="flex items-center justify-between text-[10px] pt-1.5 border-t border-slate-800/40">
+                        <span class="text-slate-400">Động lượng lệch: <strong class="text-indigo-400">${p.gap.toFixed(1)}đ</strong></span>
+                        <span class="text-indigo-500 font-semibold flex items-center space-x-1 hover:underline">
+                            <span>Lập Kế Hoạch</span>
+                            <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                        </span>
+                    </div>
+                </div>`).join('');
             lucide.createIcons();
         }
 
-        // Render 2D Grid Table
         function renderMatrix() {
             const body = document.getElementById('matrix-grid-body');
-            body.innerHTML = '';
-
-            const list = ['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'NZD'];
-
-            list.forEach((rowCode, rowIndex) => {
+            const list = CURRENCY_DEFS.map(c => c.code);
+            body.innerHTML = list.map(rowCode => {
                 const rowCur = currencies.find(c => c.code === rowCode);
-                let rowHtml = `<tr class="border-b border-slate-850/60 hover:bg-slate-900/20">`;
-                
-                // Header of Row
-                rowHtml += `<td class="p-3 font-extrabold text-slate-300 bg-slate-900/10 text-left flex items-center space-x-1.5 min-w-[90px]">
-                    <span>${rowCur.flag}</span>
-                    <span>${rowCur.code}</span>
-                </td>`;
-
-                list.forEach((colCode, colIndex) => {
-                    const colCur = currencies.find(c => c.code === colCode);
-
+                let rowHtml = `<tr class="border-b border-slate-800/60 hover:bg-slate-900/20">`;
+                rowHtml += `<td class="p-3 font-extrabold text-slate-300 bg-slate-900/10 text-left min-w-[90px]"><span class="inline-flex items-center space-x-1.5"><span>${rowCur.flag}</span><span>${rowCur.code}</span></span></td>`;
+                list.forEach(colCode => {
                     if (rowCode === colCode) {
-                        // Diagonal neutral cells
                         rowHtml += `<td class="p-3 bg-slate-900/20 text-slate-600 font-bold">--</td>`;
-                    } else {
-                        // Calculate pair cross relationship
-                        const gap = rowCur.score - colCur.score;
-                        let cellBg = 'bg-transparent text-slate-400';
-                        let action = 'Neutral';
-
-                        if (gap >= 7) {
-                            cellBg = 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20';
-                            action = 'STRONG BUY';
-                        } else if (gap >= 3) {
-                            cellBg = 'bg-emerald-500/5 text-emerald-300/80';
-                            action = 'BUY';
-                        } else if (gap <= -7) {
-                            cellBg = 'bg-rose-500/15 text-rose-400 border border-rose-500/20';
-                            action = 'STRONG SELL';
-                        } else if (gap <= -3) {
-                            cellBg = 'bg-rose-500/5 text-rose-300/80';
-                            action = 'SELL';
-                        }
-
-                        // Determine pair standard name
-                        const standardPairName = getStandardPairName(rowCode, colCode);
-
-                        rowHtml += `<td onclick="openTradePlanner('${standardPairName}')" class="p-3 ${cellBg} font-bold transition-all hover:brightness-125 cursor-pointer" title="${rowCode}/${colCode} Gap: ${gap.toFixed(1)} -> Click để lập kế hoạch">
-                            <span class="block text-[10px]">${gap > 0 ? '+' : ''}${gap.toFixed(1)}</span>
-                            <span class="text-[8px] opacity-40 font-semibold block">${action}</span>
-                        </td>`;
+                        return;
                     }
+                    const colCur = currencies.find(c => c.code === colCode);
+                    const gap = rowCur.score - colCur.score;
+                    let cellBg = 'bg-transparent text-slate-400';
+                    let action = 'Neutral';
+                    if (gap >= 7)       { cellBg = 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'; action = 'STRONG'; }
+                    else if (gap >= 3)  { cellBg = 'bg-emerald-500/5 text-emerald-300/80'; action = `Mạnh hơn ${colCode}`; }
+                    else if (gap <= -7) { cellBg = 'bg-rose-500/15 text-rose-400 border border-rose-500/20'; action = 'STRONG'; }
+                    else if (gap <= -3) { cellBg = 'bg-rose-500/5 text-rose-300/80'; action = `Yếu hơn ${colCode}`; }
+
+                    const stdPair = getStandardPairName(rowCode, colCode);
+                    // Hướng lệnh trên cặp CHUẨN: nếu rowCode là base của cặp chuẩn thì gap>0 = BUY; nếu là quote thì đảo chiều
+                    const rowIsBase = stdPair.startsWith(rowCode);
+                    const stdGap = rowIsBase ? gap : -gap;
+                    if (Math.abs(gap) >= 3) action = (stdGap > 0 ? 'BUY ' : 'SELL ') + stdPair;
+
+                    rowHtml += `<td onclick="openTradePlanner('${stdPair}')" class="p-3 ${cellBg} font-bold transition-all hover:brightness-125 cursor-pointer" title="${rowCode} vs ${colCode} · Gap: ${gap.toFixed(1)} → ${action} · Click để lập kế hoạch">
+                        <span class="block text-[10px]">${fmtScore(gap)}</span>
+                        <span class="text-[8px] opacity-50 font-semibold block">${action}</span>
+                    </td>`;
                 });
-
-                rowHtml += `</tr>`;
-                body.innerHTML += rowHtml;
-            });
+                return rowHtml + `</tr>`;
+            }).join('');
         }
 
-        // Helper to retrieve standard currency pairing hierarchy code
-        function getStandardPairName(c1, c2) {
-            const majors = [
-                'EURUSD', 'GBPUSD', 'AUDUSD', 'NZDUSD', 'USDJPY', 'USDCHF', 'USDCAD',
-                'EURJPY', 'GBPJPY', 'EURGBP', 'EURCHF', 'EURCAD', 'EURAUD', 'EURNZD',
-                'GBPCHF', 'GBPAUD', 'GBPCAD', 'GBPNZD', 'AUDJPY', 'AUDCAD', 'AUDCHF',
-                'AUDNZD', 'NZDJPY', 'NZDCAD', 'NZDCHF', 'CADJPY', 'CADCHF', 'CHFJPY'
-            ];
-            
-            if (majors.includes(`${c1}${c2}`)) return `${c1}${c2}`;
-            if (majors.includes(`${c2}${c1}`)) return `${c2}${c1}`;
-            return `${c1}${c2}`; // Default fallback
-        }
-
-        // LocalStorage Logic to preserve states between sessions
-        function saveToTempSession() {
-            localStorage.setItem('KenvinZone_forex_temp', JSON.stringify(currencies));
-        }
-
-        function loadLocalStorageData() {
-            const data = localStorage.getItem('KenvinZone_forex_temp');
-            if (data) {
-                try {
-                    currencies = JSON.parse(data);
-                } catch(e) {
-                    console.error("Error parsing localstorage data", e);
-                }
-            }
-        }
-
-        // AI Scraping and Auto-filling Trigger Core Engine
+        // ---------------- AI Scan (yêu cầu cấu hình — không bao giờ giả dữ liệu thành công) ----------------
         async function triggerAIScan() {
+            const config = getConfig();
+            if (!config.proxyUrl && !config.apiKey) {
+                toast('Chưa cấu hình kết nối AI. Vui lòng vào Cài đặt (biểu tượng bánh răng).', 'warning');
+                openSettingsModal();
+                return;
+            }
+
             const consoleLog = document.getElementById('ai-console-log');
             const statusText = document.getElementById('ai-status-text');
             const modal = document.getElementById('ai-loading-modal');
-
-            // Show Loading Modal
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-
-            // Reset Console
-            consoleLog.innerHTML = '<div>[SYSTEM] Initializing AI Technical Scraping Protocols...</div>';
-            statusText.innerText = "Đang kết nối trạm máy chủ AI...";
+            consoleLog.innerHTML = '<div>[SYSTEM] Khởi tạo phiên ước lượng AI...</div>';
+            statusText.innerText = 'Đang kết nối máy chủ AI...';
 
             const appendLog = (text) => {
                 const row = document.createElement('div');
@@ -1338,191 +1207,179 @@
                 consoleLog.scrollTop = consoleLog.scrollHeight;
             };
 
+            const model = config.model || 'gemini-2.0-flash';
+            const apiUrl = config.proxyUrl
+                ? `${config.proxyUrl.replace(/\/+$/, '')}/v1beta/models/${model}:generateContent`
+                : `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(config.apiKey)}`;
+
+            const systemPrompt = `You are a financial market analyst. Estimate the CURRENT relative technical posture of the 8 major currencies (USD, EUR, GBP, JPY, AUD, CAD, CHF, NZD) using recent market information from search.
+Assign scores with these exact rules per currency:
+- trendW1: +3 bullish / 0 neutral / -3 bearish
+- trendD1: +2 / 0 / -2
+- trendH4: +1.5 / 0 / -1.5
+- trendH1: +1 / 0 / -1
+- trendM15: +0.5 / 0 / -0.5
+- trendM5: +0.5 / 0 / -0.5
+- ema20: +1 (price likely above EMA20) or -1 (below)
+- rsi: +1 (RSI likely > 50) or -1 (< 50)
+- sentiment: +1 (positive macro/news stance) or -1 (negative)
+Output STRICTLY a JSON array of 8 objects, one per currency code. No prose, no markdown fences.`;
+
+            const payload = {
+                contents: [{ parts: [{ text: 'Estimate current currency strength scores for USD, EUR, GBP, JPY, AUD, CAD, CHF, NZD across W1, D1, H4, H1, M15, M5, plus EMA20 position, RSI(14) posture, and macro sentiment.' }] }],
+                tools: [{ google_search: {} }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: { temperature: 0.0 }
+            };
+
             try {
-                await new Promise(resolve => setTimeout(resolve, 800));
-                appendLog("[NETWORK] Establishing Gemini API Secure Channel...");
-                statusText.innerText = "Đang rà soát và cào dữ liệu Forex toàn cầu...";
-
-                // API call to research currency indexes with Google search grounding
-                const systemPrompt = `You are a world-class financial algorithmic parser. Your task is to estimate and analyze the current real-time technical indicators (RSI 14, Price position relative to EMA 20, and general multi-timeframe trends) for the 8 major currencies (USD, EUR, GBP, JPY, AUD, CAD, CHF, NZD).
-                Analyze their strength relative to the market across the 6 major timeframes: W1, D1, H4, H1, M15, and M5.
-                Assign scores matching these precise rules:
-                - trendW1: Bullish(+3), Neutral(0), or Bearish(-3)
-                - trendD1: Bullish(+2), Neutral(0), or Bearish(-2)
-                - trendH4: Bullish(+1.5), Neutral(0), or Bearish(-1.5)
-                - trendH1: Bullish(+1), Neutral(0), or Bearish(-1)
-                - trendM15: Bullish(+0.5), Neutral(0), or Bearish(-0.5)
-                - trendM5: Bullish(+0.5), Neutral(0), or Bearish(-0.5)
-                - ema20: Price above EMA20 (+1) or below EMA20 (-1)
-                - rsi: RSI > 50 (+1) or RSI < 50 (-1)
-                - sentiment: Positive macro stance (+1) or Negative stance (-1)
-                Provide the output strictly as a JSON array of 8 objects representing each currency code.`;
-
-                const userQuery = "Gather current currency strength, RSI, EMA20 status, and trends for USD, EUR, GBP, JPY, AUD, CAD, CHF, NZD on W1, D1, H4, H1, M15, and M5 timeframes based on real-time market data.";
-                const apiKey = "AQ.Ab8RN6LXG-2I0vHE68Dp4a1JDzsQyoLZoTyo3_wqiqjZ8C2MRg";
-                // Downgrading to the highly stable production model "gemini-1.5-flash"
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
-                appendLog("[AI] Performing real-time Search Grounding on major currency pairs...");
-                
-                const payload = {
-                    contents: [{ parts: [{ text: userQuery }] }],
-                    tools: [{ "google_search": {} }],
-                    systemInstruction: { parts: [{ text: systemPrompt }] },
-                    generationConfig: {
-                        temperature: 0.0, // Forced to absolute 0 to maintain absolute consistency across repetitive scans
-                        responseMimeType: "application/json",
-                        responseSchema: {
-                            type: "ARRAY",
-                            items: {
-                                type: "OBJECT",
-                                properties: {
-                                    "code": { "type": "STRING" },
-                                    "trendW1": { "type": "NUMBER" },
-                                    "trendD1": { "type": "NUMBER" },
-                                    "trendH4": { "type": "NUMBER" },
-                                    "trendH1": { "type": "NUMBER" },
-                                    "trendM15": { "type": "NUMBER" },
-                                    "trendM5": { "type": "NUMBER" },
-                                    "ema20": { "type": "NUMBER" },
-                                    "rsi": { "type": "NUMBER" },
-                                    "sentiment": { "type": "NUMBER" }
-                                },
-                                "required": ["code", "trendW1", "trendD1", "trendH4", "trendH1", "trendM15", "trendM5", "ema20", "rsi", "sentiment"]
-                            }
-                        }
-                    }
-                };
+                appendLog(`[API] Gửi truy vấn tới ${model}${config.proxyUrl ? ' (qua proxy bảo mật)' : ''}...`);
+                statusText.innerText = 'AI đang phân tích thị trường (có thể mất 10–30 giây)...';
 
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 9500); // Fail-safe fallback trigger threshold
-
-                appendLog("[API] Sending structured query payload to Gemini 1.5-Flash...");
+                const timeoutId = setTimeout(() => controller.abort(), 45000);
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload),
                     signal: controller.signal
                 });
-
                 clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    const errBody = await response.text().catch(() => '');
+                    throw new Error(`HTTP ${response.status}: ${errBody.slice(0, 200)}`);
+                }
                 const result = await response.json();
-                
-                if (result.error) {
-                    throw new Error(result.error.message || "API Key error or quota limits hit.");
-                }
-                
-                const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (result.error) throw new Error(result.error.message || 'API error');
 
-                if (!jsonText) {
-                    throw new Error("Empty AI response. Triggering robust local calculator engine.");
-                }
+                // Gom toàn bộ text parts (khi bật search grounding, response có thể nhiều part)
+                const parts = result.candidates?.[0]?.content?.parts || [];
+                let jsonText = parts.map(p => p.text || '').join('').trim();
+                if (!jsonText) throw new Error('AI trả về rỗng.');
+                jsonText = jsonText.replace(/```json|```/g, '').trim();
+                const start = jsonText.indexOf('[');
+                const end = jsonText.lastIndexOf(']');
+                if (start === -1 || end === -1) throw new Error('AI không trả về JSON hợp lệ.');
+                const parsedData = JSON.parse(jsonText.slice(start, end + 1));
 
-                const parsedData = JSON.parse(jsonText);
-                appendLog("[SUCCESS] REAL-TIME API connected successfully! Mapping ratings to dashboard...");
-
-                // Map results back to current state
+                let mapped = 0;
                 parsedData.forEach(item => {
                     const matched = currencies.find(c => c.code === item.code);
-                    if (matched) {
-                        matched.trendW1 = item.trendW1;
-                        matched.trendD1 = item.trendD1;
-                        matched.trendH4 = item.trendH4;
-                        matched.trendH1 = item.trendH1;
-                        matched.trendM15 = item.trendM15;
-                        matched.trendM5 = item.trendM5;
-                        matched.ema20 = item.ema20;
-                        matched.rsi = item.rsi;
-                        matched.sentiment = item.sentiment;
-                        appendLog(`[MAPPED] ${matched.code}: Trend Score loaded.`);
-                    }
+                    if (!matched) return;
+                    ALL_KEYS.forEach(k => {
+                        const v = Number(item[k]);
+                        matched[k] = Number.isFinite(v) ? v : 0;
+                    });
+                    mapped++;
+                    appendLog(`[MAPPED] ${matched.code}: đã nạp điểm ước lượng.`);
                 });
+                if (mapped === 0) throw new Error('Không map được đồng tiền nào từ kết quả AI.');
+
+                dataMeta = { source: 'ai', updatedAt: Date.now() };
+                appendLog('[SUCCESS] Hoàn tất. Lưu ý: đây là ƯỚC LƯỢNG của AI — hãy đối chiếu chart trước khi giao dịch.');
+                refreshAll();
+                toast('AI đã nạp điểm ước lượng. Hãy đối chiếu với chart thực tế!', 'warning');
+                setTimeout(closeAILoading, 900);
 
             } catch (error) {
-                // FALLBACK PROCESSOR: Stable seeded hourly fallback to prevent erratic jumping
-                appendLog(`[WARNING] Live API offline/limited: ${error.message}`);
-                appendLog("[FALLBACK] Running Deterministic Technical Algorithmic Scanner...");
-                statusText.innerText = "Đang chạy Bộ Phân Tích Kỹ Thuật Dự Phòng...";
-
-                // Generate pseudo-random consistent seeds based on current Year, Month, Day and Hour
-                const now = new Date();
-                const hourlySeed = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}`;
-
-                for (let c of currencies) {
-                    await new Promise(resolve => setTimeout(resolve, 80));
-                    
-                    // Create stable deterministic metrics unique to each currency and the specific hour
-                    const valW1 = getSeededValue(hourlySeed, c.code + '_W1');
-                    const valD1 = getSeededValue(hourlySeed, c.code + '_D1');
-                    const valH4 = getSeededValue(hourlySeed, c.code + '_H4');
-                    const valH1 = getSeededValue(hourlySeed, c.code + '_H1');
-                    const valM15 = getSeededValue(hourlySeed, c.code + '_M15');
-                    const valM5 = getSeededValue(hourlySeed, c.code + '_M5');
-                    const valEma = getSeededValue(hourlySeed, c.code + '_EMA');
-                    const valRsi = getSeededValue(hourlySeed, c.code + '_RSI');
-                    const valSent = getSeededValue(hourlySeed, c.code + '_SENT');
-
-                    c.trendW1 = valW1 > 0.65 ? 3 : (valW1 < 0.35 ? -3 : 0);
-                    c.trendD1 = valD1 > 0.65 ? 2 : (valD1 < 0.35 ? -2 : 0);
-                    c.trendH4 = valH4 > 0.65 ? 1.5 : (valH4 < 0.35 ? -1.5 : 0);
-                    c.trendH1 = valH1 > 0.65 ? 1 : (valH1 < 0.35 ? -1 : 0);
-                    c.trendM15 = valM15 > 0.65 ? 0.5 : (valM15 < 0.35 ? -0.5 : 0);
-                    c.trendM5 = valM5 > 0.65 ? 0.5 : (valM5 < 0.35 ? -0.5 : 0);
-                    
-                    c.ema20 = valEma > 0.5 ? 1 : -1;
-                    c.rsi = valRsi > 0.5 ? 1 : -1;
-                    c.sentiment = valSent > 0.55 ? 1 : -1;
-
-                    appendLog(`[SCAN] Đã hoàn thành quét kỹ thuật RSI/EMA cho ${c.code}`);
-                }
-                appendLog("[SUCCESS] Khởi tạo bảng điểm nhất quán thành công! Kết quả sẽ giữ cố định trong giờ này.");
+                appendLog(`[ERROR] ${error.message}`);
+                statusText.innerText = 'Kết nối AI thất bại.';
+                setTimeout(() => {
+                    closeAILoading();
+                    // KHÔNG lặng lẽ đổ dữ liệu giả — hỏi rõ ràng, và nếu đồng ý thì gắn nhãn DEMO đỏ
+                    if (confirm('Kết nối AI thất bại: ' + error.message + '\n\nBạn có muốn đổ DỮ LIỆU DEMO NGẪU NHIÊN chỉ để xem thử giao diện không?\n(Sẽ hiện cảnh báo đỏ — tuyệt đối không dùng để giao dịch thật)')) {
+                        fillDemoData();
+                    } else {
+                        toast('Đã hủy. Bạn có thể chấm điểm thủ công hoặc kiểm tra lại Cài đặt API.', 'info');
+                    }
+                }, 600);
             }
-
-            // Recalculate metrics & close modal
-            calculateScores();
-            updateCurrencyUI();
-            updateStats();
-            renderBars();
-            updateChartData();
-            renderRecommendedPairs();
-            renderMatrix();
-            
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            }, 500);
         }
 
-        // Archive week report list logic
+        function closeAILoading() {
+            const modal = document.getElementById('ai-loading-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // Demo data — LUÔN gắn nhãn 'demo' và banner cảnh báo đỏ
+        function fillDemoData() {
+            const seed = Date.now();
+            const rand = (i) => {
+                const x = Math.sin(seed + i * 9973) * 10000;
+                return x - Math.floor(x);
+            };
+            currencies.forEach((c, ci) => {
+                TIMEFRAMES.forEach((tf, ti) => {
+                    const v = rand(ci * 10 + ti);
+                    c[tf.key] = v > 0.65 ? tf.weight : (v < 0.35 ? -tf.weight : 0);
+                });
+                FILTERS.forEach((f, fi) => {
+                    c[f.key] = rand(ci * 10 + 6 + fi) > 0.5 ? 1 : -1;
+                });
+            });
+            dataMeta = { source: 'demo', updatedAt: Date.now() };
+            refreshAll();
+            toast('Đã đổ dữ liệu DEMO — chỉ dùng xem giao diện!', 'error');
+        }
+
+        // ---------------- Settings ----------------
+        function openSettingsModal() {
+            const config = getConfig();
+            document.getElementById('cfg-proxy').value = config.proxyUrl || '';
+            document.getElementById('cfg-apikey').value = config.apiKey || '';
+            document.getElementById('cfg-model').value = config.model || '';
+            const modal = document.getElementById('settings-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            lucide.createIcons();
+        }
+        function closeSettingsModal() {
+            const modal = document.getElementById('settings-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+        function saveSettings() {
+            const config = {
+                proxyUrl: document.getElementById('cfg-proxy').value.trim(),
+                apiKey: document.getElementById('cfg-apikey').value.trim(),
+                model: document.getElementById('cfg-model').value.trim()
+            };
+            localStorage.setItem(LS_CONFIG_KEY, JSON.stringify(config));
+            closeSettingsModal();
+            toast('Đã lưu cài đặt kết nối AI.', 'success');
+        }
+
+        // ---------------- Archives ----------------
         function saveCurrentWeek() {
-            const now = new Date();
-            const dateStr = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()} ${now.getHours()}:${now.getMinutes()}`;
-            
-            // Collect metadata
+            if (scoredCount() === 0) { toast('Chưa có điểm số nào để lưu.', 'warning'); return; }
             const archiveItem = {
                 id: 'archive_' + Date.now(),
-                date: dateStr,
+                date: fmtDateTime(Date.now()),
+                timestamp: Date.now(),
+                source: dataMeta.source || 'manual',
                 currencies: JSON.parse(JSON.stringify(currencies)),
                 notes: ''
             };
-
-            let archives = JSON.parse(localStorage.getItem('KenvinZone_forex_archives') || '[]');
+            const archives = getArchives();
             archives.unshift(archiveItem);
-            localStorage.setItem('KenvinZone_forex_archives', JSON.stringify(archives));
-
+            setArchives(archives);
             renderArchivesList();
             viewArchiveItem(archiveItem.id);
+            toast('Đã lưu bản ghi mới.', 'success');
         }
 
         function deleteArchive(id, e) {
             e.stopPropagation();
-            if (!confirm("Bạn có chắc chắn muốn xóa bản lưu trữ này không?")) return;
-            
-            let archives = JSON.parse(localStorage.getItem('KenvinZone_forex_archives') || '[]');
-            archives = archives.filter(item => item.id !== id);
-            localStorage.setItem('KenvinZone_forex_archives', JSON.stringify(archives));
-            
+            if (!confirm('Bạn có chắc chắn muốn xóa bản lưu trữ này không?')) return;
+            setArchives(getArchives().filter(item => item.id !== id));
             renderArchivesList();
+            renderArchiveEmptyState();
+            toast('Đã xóa bản lưu.', 'info');
+        }
+
+        function renderArchiveEmptyState() {
             document.getElementById('archive-view-panel').innerHTML = `
                 <div class="text-center py-20 my-auto text-slate-500 space-y-4">
                     <div class="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center mx-auto text-slate-400 border border-slate-800">
@@ -1530,73 +1387,60 @@
                     </div>
                     <div>
                         <h3 class="text-slate-300 font-bold">Chưa Có Bản Ghi Lịch Sử Được Chọn</h3>
-                        <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">Vui lòng nhấp vào một bản ghi ở bên trái hoặc nhấp "Lưu Bản Mới" để lưu trạng thái chấm điểm hiện tại của bạn.</p>
+                        <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">Nhấp vào một bản ghi ở bên trái, hoặc nhấp "Lưu Bản Mới" để lưu trạng thái chấm điểm hiện tại.</p>
                     </div>
-                </div>
-            `;
+                </div>`;
             lucide.createIcons();
+        }
+
+        function sourceBadgeHtml(source) {
+            if (source === 'demo') return '<span class="text-[8px] font-extrabold px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-400 border border-rose-500/30">DEMO</span>';
+            if (source === 'ai') return '<span class="text-[8px] font-extrabold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">AI</span>';
+            return '<span class="text-[8px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">THỦ CÔNG</span>';
         }
 
         function renderArchivesList() {
             const container = document.getElementById('saved-weeks-list');
-            container.innerHTML = '';
-
-            const archives = JSON.parse(localStorage.getItem('KenvinZone_forex_archives') || '[]');
-
+            const archives = getArchives();
             if (archives.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-10 text-slate-500 text-xs">
-                        Chưa có bản ghi tuần nào được lưu. Hãy nhấp nút "Lưu Bản Mới" để tạo.
-                    </div>
-                `;
+                container.innerHTML = `<div class="text-center py-10 text-slate-500 text-xs">Chưa có bản ghi nào được lưu. Nhấp "Lưu Bản Mới" để tạo.</div>`;
                 return;
             }
-
-            archives.forEach(item => {
-                // Determine strongest/weakest of this archive
+            container.innerHTML = archives.map(item => {
                 const sorted = [...item.currencies].sort((a, b) => b.score - a.score);
                 const strongest = sorted[0];
                 const weakest = sorted[sorted.length - 1];
-
-                container.innerHTML += `
+                return `
                     <div onclick="viewArchiveItem('${item.id}')" class="bg-slate-900/40 hover:bg-indigo-950/20 p-3.5 rounded-xl border border-slate-800/80 hover:border-indigo-500/20 transition-all cursor-pointer flex items-center justify-between group">
                         <div class="space-y-1">
-                            <span class="text-xs font-bold text-slate-200 block">${item.date}</span>
+                            <span class="text-xs font-bold text-slate-200 flex items-center space-x-1.5"><span>${escapeHtml(item.date)}</span>${sourceBadgeHtml(item.source)}</span>
                             <div class="flex items-center space-x-2 text-[10px]">
-                                <span class="text-emerald-400 font-bold">Mạnh: ${strongest.code} (${strongest.score > 0 ? '+' : ''}${strongest.score.toFixed(1)})</span>
+                                <span class="text-emerald-400 font-bold">Mạnh: ${strongest.code} (${fmtScore(strongest.score)})</span>
                                 <span class="text-slate-600">|</span>
-                                <span class="text-rose-400 font-bold">Yếu: ${weakest.code} (${weakest.score > 0 ? '+' : ''}${weakest.score.toFixed(1)})</span>
+                                <span class="text-rose-400 font-bold">Yếu: ${weakest.code} (${fmtScore(weakest.score)})</span>
                             </div>
                         </div>
                         <button onclick="deleteArchive('${item.id}', event)" class="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-slate-800 rounded text-slate-500 hover:text-rose-400 transition-all">
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                         </button>
-                    </div>
-                `;
-            });
+                    </div>`;
+            }).join('');
             lucide.createIcons();
         }
 
-        // View dynamic details of clicked historic archive session
         function viewArchiveItem(id) {
-            const archives = JSON.parse(localStorage.getItem('KenvinZone_forex_archives') || '[]');
-            const archive = archives.find(item => item.id === id);
+            const archive = getArchives().find(item => item.id === id);
             if (!archive) return;
-
             const panel = document.getElementById('archive-view-panel');
-            
-            // Build dynamic table of currency scores in that specific week
             const sorted = [...archive.currencies].sort((a, b) => b.score - a.score);
-            let currencyRowsHtml = '';
-            
-            sorted.forEach((c, idx) => {
-                const percent = ((c.score + 11.5) / 23) * 100;
-                let colorClass = "bg-gradient-to-r from-slate-500 to-indigo-500";
-                if (c.score > 0) colorClass = "bg-gradient-to-r from-indigo-500 to-emerald-400";
-                else if (c.score < 0) colorClass = "bg-gradient-to-r from-rose-500 to-orange-400";
-                
-                currencyRowsHtml += `
-                    <div class="flex items-center justify-between text-xs py-2 border-b border-slate-850/40">
+
+            const currencyRowsHtml = sorted.map(c => {
+                const percent = ((c.score + MAX_SCORE) / (2 * MAX_SCORE)) * 100;
+                let colorClass = 'bg-gradient-to-r from-slate-500 to-indigo-500';
+                if (c.score > 0) colorClass = 'bg-gradient-to-r from-indigo-500 to-emerald-400';
+                else if (c.score < 0) colorClass = 'bg-gradient-to-r from-rose-500 to-orange-400';
+                return `
+                    <div class="flex items-center justify-between text-xs py-2 border-b border-slate-800/40">
                         <div class="flex items-center space-x-2 w-1/4">
                             <span class="text-sm">${c.flag}</span>
                             <span class="font-bold text-slate-200">${c.code}</span>
@@ -1606,20 +1450,16 @@
                                 <div class="${colorClass} h-full" style="width: ${percent}%"></div>
                             </div>
                         </div>
-                        <span class="w-1/4 text-right font-black ${c.score > 0 ? 'text-emerald-400' : c.score < 0 ? 'text-rose-400' : 'text-slate-400'}">
-                            ${c.score > 0 ? '+' : ''}${c.score.toFixed(1)}
-                        </span>
-                    </div>
-                `;
-            });
+                        <span class="w-1/4 text-right font-black ${c.score > 0 ? 'text-emerald-400' : c.score < 0 ? 'text-rose-400' : 'text-slate-400'}">${fmtScore(c.score)}</span>
+                    </div>`;
+            }).join('');
 
-            // Build dynamic text of archive view
             panel.innerHTML = `
                 <div class="space-y-5">
                     <div class="flex items-center justify-between pb-3 border-b border-slate-800">
                         <div>
-                            <h3 class="text-base font-extrabold text-white">Chi Tiết Bản Ghi Tuần</h3>
-                            <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Thời gian phân tích: ${archive.date}</p>
+                            <h3 class="text-base font-extrabold text-white flex items-center space-x-2"><span>Chi Tiết Bản Ghi</span>${sourceBadgeHtml(archive.source)}</h3>
+                            <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Thời gian phân tích: ${escapeHtml(archive.date)}</p>
                         </div>
                         <button onclick="restoreArchiveToActive('${archive.id}')" class="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg hover:bg-emerald-500/20 transition-all flex items-center space-x-1">
                             <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
@@ -1628,104 +1468,136 @@
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Score Bars -->
                         <div class="space-y-2 bg-slate-900/20 p-4 rounded-xl border border-slate-800/60">
                             <span class="text-xs font-bold text-indigo-400 block mb-2">Thứ Tự Sức Mạnh Tiền Tệ</span>
                             ${currencyRowsHtml}
                         </div>
-
-                        <!-- Notes & Best trades summary -->
                         <div class="space-y-4 flex flex-col justify-between">
                             <div class="bg-slate-900/20 p-4 rounded-xl border border-slate-800/60 space-y-3">
                                 <span class="text-xs font-bold text-cyan-400 block">Kế Hoạch & Nhật Ký Tuần</span>
-                                <textarea id="archive-note-text" onchange="updateArchiveNotes('${archive.id}', this.value)" rows="5" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="Viết nhật ký giao dịch tuần này, kết quả sau tuần phân tích...">${archive.notes || ''}</textarea>
-                                <span class="text-[9px] text-slate-500 block">Hệ thống tự động lưu ghi chú khi bạn thay đổi nội dung ô nhập.</span>
+                                <textarea id="archive-note-text" onchange="updateArchiveNotes('${archive.id}', this.value)" rows="5" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-indigo-500" placeholder="Viết nhật ký giao dịch tuần này, kết quả sau tuần phân tích...">${escapeHtml(archive.notes || '')}</textarea>
+                                <span class="text-[9px] text-slate-500 block">Ghi chú tự động lưu khi bạn rời khỏi ô nhập.</span>
                             </div>
-
                             <button onclick="copyWeeklyReportMarkdown('${archive.id}')" class="w-full py-2.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 hover:border-slate-700 transition-all flex items-center justify-center space-x-1.5">
                                 <i data-lucide="clipboard" class="w-4 h-4 text-indigo-400"></i>
                                 <span>Copy Báo Cáo Tuần (Markdown)</span>
                             </button>
                         </div>
                     </div>
-                </div>
-            `;
+                </div>`;
             lucide.createIcons();
         }
 
-        // Restore historic week variables to operational states
         function restoreArchiveToActive(id) {
-            const archives = JSON.parse(localStorage.getItem('KenvinZone_forex_archives') || '[]');
-            const archive = archives.find(item => item.id === id);
+            const archive = getArchives().find(item => item.id === id);
             if (!archive) return;
-
-            if (confirm("Hành động này sẽ thay thế bảng đánh giá điểm số hiện tại bằng dữ liệu của tuần này. Tiếp tục?")) {
-                currencies = JSON.parse(JSON.stringify(archive.currencies));
-                calculateScores();
-                updateCurrencyUI();
-                updateStats();
-                renderBars();
-                updateChartData();
-                renderRecommendedPairs();
-                renderMatrix();
-                switchTab('dashboard');
-            }
+            if (!confirm('Hành động này sẽ thay thế bảng đánh giá hiện tại bằng dữ liệu của bản ghi này. Tiếp tục?')) return;
+            currencies = CURRENCY_DEFS.map(freshCurrency);
+            archive.currencies.forEach(old => {
+                const cur = currencies.find(c => c.code === old.code);
+                if (!cur) return;
+                ALL_KEYS.forEach(k => { const v = Number(old[k]); if (Number.isFinite(v)) cur[k] = v; });
+            });
+            dataMeta = { source: archive.source || 'manual', updatedAt: archive.timestamp || null };
+            refreshAll();
+            switchTab('dashboard');
+            toast('Đã khôi phục bản ghi về bảng đánh giá.', 'success');
         }
 
         function updateArchiveNotes(id, text) {
-            let archives = JSON.parse(localStorage.getItem('KenvinZone_forex_archives') || '[]');
+            const archives = getArchives();
             const idx = archives.findIndex(item => item.id === id);
             if (idx !== -1) {
                 archives[idx].notes = text;
-                localStorage.setItem('KenvinZone_forex_archives', JSON.stringify(archives));
+                setArchives(archives);
+                toast('Đã lưu ghi chú.', 'success');
             }
         }
 
-        // Trade Plan and Markdown generators
-        function openTradePlanner(pairName) {
-            const allPairs = getCrossPairs();
-            const pairData = allPairs.find(p => p.pair === pairName);
-            if (!pairData) return;
+        // ---------------- Backup / Restore ----------------
+        function exportAllData() {
+            const payload = {
+                app: 'KenvinZone Forex Matrix',
+                version: SCHEMA_VERSION,
+                exportedAt: new Date().toISOString(),
+                state: { currencies, dataMeta },
+                archives: getArchives()
+            };
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const d = new Date();
+            a.href = url;
+            a.download = `kenvinzone-forex-backup-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            toast('Đã xuất file sao lưu JSON.', 'success');
+        }
 
+        function importAllData(event) {
+            const file = event.target.files?.[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const payload = JSON.parse(e.target.result);
+                    if (payload.app !== 'KenvinZone Forex Matrix') throw new Error('File không đúng định dạng sao lưu của app này.');
+                    if (!confirm('Khôi phục sẽ GHI ĐÈ toàn bộ dữ liệu hiện tại (bảng điểm + lịch sử lưu). Tiếp tục?')) return;
+                    if (Array.isArray(payload.archives)) setArchives(payload.archives);
+                    if (payload.state?.currencies) {
+                        currencies = CURRENCY_DEFS.map(freshCurrency);
+                        payload.state.currencies.forEach(old => {
+                            const cur = currencies.find(c => c.code === old.code);
+                            if (!cur) return;
+                            ALL_KEYS.forEach(k => { const v = Number(old[k]); if (Number.isFinite(v)) cur[k] = v; });
+                        });
+                        dataMeta = payload.state.dataMeta || { source: 'manual', updatedAt: null };
+                    }
+                    refreshAll();
+                    renderArchivesList();
+                    renderArchiveEmptyState();
+                    toast('Khôi phục dữ liệu thành công!', 'success');
+                } catch (err) {
+                    toast('Lỗi khôi phục: ' + err.message, 'error');
+                } finally {
+                    event.target.value = '';
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // ---------------- Trade Planner ----------------
+        function openTradePlanner(pairName) {
+            const pairData = getCrossPairs().find(p => p.pair === pairName);
+            if (!pairData) return;
             currentEditingPair = pairData;
 
             document.getElementById('modal-pair-flag').innerText = `${pairData.baseFlag} ${pairData.quoteFlag}`;
             document.getElementById('modal-pair-title').innerText = pairData.pair;
-            
             document.getElementById('modal-base-code').innerText = pairData.base;
-            document.getElementById('modal-base-score').innerText = `${pairData.baseScore > 0 ? '+' : ''}${pairData.baseScore.toFixed(1)}`;
-            document.getElementById('modal-base-score').className = pairData.baseScore >= 0 ? "text-sm font-black text-emerald-400" : "text-sm font-black text-rose-400";
-
+            document.getElementById('modal-base-score').innerText = fmtScore(pairData.baseScore);
+            document.getElementById('modal-base-score').className = pairData.baseScore >= 0 ? 'text-sm font-black text-emerald-400' : 'text-sm font-black text-rose-400';
             document.getElementById('modal-quote-code').innerText = pairData.quote;
-            document.getElementById('modal-quote-score').innerText = `${pairData.quoteScore > 0 ? '+' : ''}${pairData.quoteScore.toFixed(1)}`;
-            document.getElementById('modal-quote-score').className = pairData.quoteScore >= 0 ? "text-sm font-black text-emerald-400" : "text-sm font-black text-rose-400";
+            document.getElementById('modal-quote-score').innerText = fmtScore(pairData.quoteScore);
+            document.getElementById('modal-quote-score').className = pairData.quoteScore >= 0 ? 'text-sm font-black text-emerald-400' : 'text-sm font-black text-rose-400';
 
             const dirBadge = document.getElementById('modal-direction-badge');
             dirBadge.innerText = pairData.recommendation;
-            if (pairData.recommendation.includes('STRONG BUY')) {
-                dirBadge.className = "py-2 px-3 text-center rounded-lg text-xs font-extrabold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30";
-            } else if (pairData.recommendation.includes('BUY')) {
-                dirBadge.className = "py-2 px-3 text-center rounded-lg text-xs font-extrabold bg-teal-500/15 text-teal-300 border border-teal-500/30";
-            } else if (pairData.recommendation.includes('STRONG SELL')) {
-                dirBadge.className = "py-2 px-3 text-center rounded-lg text-xs font-extrabold bg-rose-500/15 text-rose-400 border border-rose-500/30";
-            } else if (pairData.recommendation.includes('SELL')) {
-                dirBadge.className = "py-2 px-3 text-center rounded-lg text-xs font-extrabold bg-amber-500/15 text-amber-300 border border-amber-500/30";
-            } else {
-                dirBadge.className = "py-2 px-3 text-center rounded-lg text-xs font-extrabold bg-slate-800 text-slate-400 border border-slate-700";
-            }
+            if (pairData.recommendation === 'STRONG BUY')       dirBadge.className = 'py-2 px-3 text-center rounded-lg text-xs font-extrabold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30';
+            else if (pairData.recommendation === 'BUY')         dirBadge.className = 'py-2 px-3 text-center rounded-lg text-xs font-extrabold bg-teal-500/15 text-teal-300 border border-teal-500/30';
+            else if (pairData.recommendation === 'STRONG SELL') dirBadge.className = 'py-2 px-3 text-center rounded-lg text-xs font-extrabold bg-rose-500/15 text-rose-400 border border-rose-500/30';
+            else if (pairData.recommendation === 'SELL')        dirBadge.className = 'py-2 px-3 text-center rounded-lg text-xs font-extrabold bg-amber-500/15 text-amber-300 border border-amber-500/30';
+            else dirBadge.className = 'py-2 px-3 text-center rounded-lg text-xs font-extrabold bg-slate-800 text-slate-400 border border-slate-700';
 
             document.getElementById('modal-gap-badge').innerText = `${pairData.gap.toFixed(1)} Điểm Chênh`;
 
-            // Reset Input Fields
-            document.getElementById('plan-entry').value = '';
-            document.getElementById('plan-sl').value = '';
-            document.getElementById('plan-tp').value = '';
-            document.getElementById('plan-notes').value = '';
+            ['plan-entry', 'plan-sl', 'plan-tp', 'plan-notes'].forEach(id => document.getElementById(id).value = '');
+            updateRRRatio();
 
-            // Display modal
             const modal = document.getElementById('trade-modal');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+            lucide.createIcons();
         }
 
         function closeTradeModal() {
@@ -1734,64 +1606,85 @@
             modal.classList.remove('flex');
         }
 
-        // Export setup plan directly to Markdown formatted text
-        function copyMarkdownPlan() {
+        function parsePrice(id) {
+            const v = parseFloat(String(document.getElementById(id).value).replace(',', '.'));
+            return Number.isFinite(v) ? v : null;
+        }
+
+        function updateRRRatio() {
+            const entry = parsePrice('plan-entry');
+            const sl = parsePrice('plan-sl');
+            const tp = parsePrice('plan-tp');
+            const box = document.getElementById('rr-display');
+            const valueEl = document.getElementById('rr-value');
+
+            if (entry === null || sl === null || tp === null) {
+                box.classList.add('hidden'); box.classList.remove('flex');
+                return;
+            }
+            const risk = Math.abs(entry - sl);
+            const reward = Math.abs(tp - entry);
+            if (risk === 0) {
+                valueEl.innerText = 'SL trùng Entry — không hợp lệ';
+                valueEl.className = 'font-black text-rose-400';
+            } else {
+                const rr = reward / risk;
+                valueEl.innerText = `1 : ${rr.toFixed(2)}`;
+                valueEl.className = rr >= 2 ? 'font-black text-emerald-400' : rr >= 1 ? 'font-black text-amber-300' : 'font-black text-rose-400';
+                // Kiểm tra logic hướng lệnh: BUY thì SL < Entry < TP, SELL ngược lại
+                const isBuy = currentEditingPair.recommendation?.includes('BUY');
+                const isSell = currentEditingPair.recommendation?.includes('SELL');
+                if ((isBuy && (sl >= entry || tp <= entry)) || (isSell && (sl <= entry || tp >= entry))) {
+                    valueEl.innerText += ' ⚠ SL/TP ngược hướng lệnh?';
+                }
+            }
+            box.classList.remove('hidden'); box.classList.add('flex');
+        }
+
+        async function copyMarkdownPlan() {
             const entry = document.getElementById('plan-entry').value || 'Chưa xác định';
             const sl = document.getElementById('plan-sl').value || 'Chưa xác định';
             const tp = document.getElementById('plan-tp').value || 'Chưa xác định';
             const notes = document.getElementById('plan-notes').value || 'Không có ghi chú thêm.';
+            const rr = document.getElementById('rr-value').innerText;
+            const sourceNote = dataMeta.source === 'ai' ? ' (điểm số do AI ước lượng — đã đối chiếu chart)' : dataMeta.source === 'demo' ? ' (⚠ DỮ LIỆU DEMO)' : '';
 
             const mdText = `### KẾ HOẠCH GIAO DỊCH: ${currentEditingPair.pair}
-- **Xu Hướng:** ${currentEditingPair.recommendation} (Chênh lệch tích lũy: ${currentEditingPair.gap.toFixed(1)}đ)
-- **Điểm Sức Mạnh:** ${currentEditingPair.base} (${currentEditingPair.baseScore.toFixed(1)}) vs ${currentEditingPair.quote} (${currentEditingPair.quoteScore.toFixed(1)})
+- **Xu Hướng:** ${currentEditingPair.recommendation} (Chênh lệch tích lũy: ${currentEditingPair.gap.toFixed(1)}đ)${sourceNote}
+- **Điểm Sức Mạnh:** ${currentEditingPair.base} (${fmtScore(currentEditingPair.baseScore)}) vs ${currentEditingPair.quote} (${fmtScore(currentEditingPair.quoteScore)})
 - **Vị Thế Vào (Entry):** ${entry}
 - **Dừng Lỗ (SL):** ${sl}
 - **Chốt Lời (TP):** ${tp}
+- **Tỉ lệ R:R:** ${rr !== '--' ? rr : 'Chưa tính'}
 - **Lý Do Kỹ Thuật / Phân Tích:** ${notes}
 
-*Báo cáo được lập từ KenvinZone Forex Matrix lúc: ${new Date().toLocaleString('vi-VN')}*`;
+*Báo cáo lập từ KenvinZone Forex Matrix v3 lúc: ${new Date().toLocaleString('vi-VN')}*`;
 
-            // Copy to Clipboard
-            const el = document.createElement('textarea');
-            el.value = mdText;
-            document.body.appendChild(el);
-            el.select();
-            document.execCommand('copy');
-            document.body.removeChild(el);
-
-            alert(`Đã sao chép kế hoạch giao dịch của cặp ${currentEditingPair.pair} thành công dưới dạng Markdown!`);
-            closeTradeModal();
+            const ok = await copyToClipboard(mdText);
+            toast(ok ? `Đã copy kế hoạch ${currentEditingPair.pair} (Markdown)!` : 'Copy thất bại — trình duyệt chặn clipboard.', ok ? 'success' : 'error');
+            if (ok) closeTradeModal();
         }
 
-        function copyWeeklyReportMarkdown(archiveId) {
-            const archives = JSON.parse(localStorage.getItem('KenvinZone_forex_archives') || '[]');
-            const archive = archives.find(item => item.id === archiveId);
+        async function copyWeeklyReportMarkdown(archiveId) {
+            const archive = getArchives().find(item => item.id === archiveId);
             if (!archive) return;
-
             const sorted = [...archive.currencies].sort((a, b) => b.score - a.score);
-            let scoreListMd = '';
-            sorted.forEach(c => {
-                scoreListMd += `- **${c.code}**: ${c.score > 0 ? '+' : ''}${c.score.toFixed(1)} ${c.flag}\n`;
-            });
+            const scoreListMd = sorted.map(c => `- **${c.code}**: ${fmtScore(c.score)} ${c.flag}`).join('\n');
+            const srcLabel = archive.source === 'ai' ? 'AI ước lượng' : archive.source === 'demo' ? '⚠ DEMO (không dùng giao dịch)' : 'Chấm điểm thủ công';
 
             const reportMd = `## BÁO CÁO XU HƯỚNG & SỨC MẠNH TIỀN TỆ TUẦN (6 Timeframes)
 - **Thời gian phân tích:** ${archive.date}
+- **Nguồn dữ liệu:** ${srcLabel}
 - **Bảng điểm xếp hạng sức mạnh:**
 ${scoreListMd}
-- **Ghi chú nhật ký giao dịch tuần:** 
+- **Ghi chú nhật ký giao dịch tuần:**
 ${archive.notes || 'Chưa cập nhật ghi chú.'}
 
 ---
-*Lập báo cáo tự động từ KenvinZone Forex Matrix v2*`;
+*Lập báo cáo tự động từ KenvinZone Forex Matrix v3*`;
 
-            const el = document.createElement('textarea');
-            el.value = reportMd;
-            document.body.appendChild(el);
-            el.select();
-            document.execCommand('copy');
-            document.body.removeChild(el);
-
-            alert('Đã copy báo cáo tuần dưới dạng Markdown vào bộ nhớ tạm!');
+            const ok = await copyToClipboard(reportMd);
+            toast(ok ? 'Đã copy báo cáo tuần (Markdown)!' : 'Copy thất bại — trình duyệt chặn clipboard.', ok ? 'success' : 'error');
         }
     </script>
 </body>
