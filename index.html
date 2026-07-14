@@ -866,7 +866,7 @@
                 .join(' ');
 
             if (n > 0 && n < 8) {
-                el.className = 'mb-4 flex items-center space-x-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-5 py-3.5 text-xs font-semibold text-amber-200 leading-relaxed shadow-lg shadow-amber-950/10';
+                el.className = 'mb-4 flex items-center space-x-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-5 py-3.5 text-xs font-semibold text-amber-200';
                 el.innerHTML = `<i data-lucide="alert-triangle" class="w-5 h-5 flex-shrink-0"></i><span>Mới hoàn tất chấm điểm <strong>${n}/8</strong> đồng tiền chính. Khuyến nghị các đề xuất cặp bên dưới chưa đạt độ chuẩn xác tốt nhất do các đồng chưa chấm đang tính mặc định 0 điểm.</span>`;
                 el.classList.remove('hidden');
                 lucide.createIcons();
@@ -1321,27 +1321,50 @@
 
             appendLog(`[KẾT NỐI] Đang sử dụng model: ${model}`);
 
-            const systemPrompt = `You are a financial market analyst. Estimate the CURRENT relative technical posture of the 8 major currencies (USD, EUR, GBP, JPY, AUD, CAD, CHF, NZD) using recent market information from search.
-Assign scores with these exact rules per currency:
-- trendW1: +3 bullish / 0 neutral / -3 bearish
-- trendD1: +2 / 0 / -2
-- trendH4: +1.5 / 0 / -1.5
-- trendH1: +1 / 0 / -1
-- trendM15: +0.5 / 0 / -0.5
-- trendM5: +0.5 / 0 / -0.5
-- ema20: +1 (price likely above EMA20) or -1 (below)
-- rsi: +1 (RSI likely > 50) or -1 (< 50)
-- sentiment: +1 (positive macro/news stance) or -1 (negative)
-Output STRICTLY a JSON array of 8 objects, one per currency code. No prose, no markdown fences.`;
+            const systemPrompt = `You are an elite financial market analyst. Your task is to estimate the CURRENT relative technical strength posture of the 8 major currencies (USD, EUR, GBP, JPY, AUD, CAD, CHF, NZD) based on your global market knowledge and real-time internet search results.
+Assign scores for each currency strictly adhering to these rules:
+- trendW1: +3 (bullish) / 0 (neutral) / -3 (bearish)
+- trendD1: +2 (bullish) / 0 (neutral) / -2 (bearish)
+- trendH4: +1.5 (bullish) / 0 (neutral) / -1.5 (bearish)
+- trendH1: +1 (bullish) / 0 (neutral) / -1 (bearish)
+- trendM15: +0.5 (bullish) / 0 (neutral) / -0.5 (bearish)
+- trendM5: +0.5 (bullish) / 0 (neutral) / -0.5 (bearish)
+- ema20: +1 (if price is above the 20-period Exponential Moving Average) or -1 (if below)
+- rsi: +1 (if RSI 14 is greater than 50) or -1 (if below 50)
+- sentiment: +1 (if news, macro data or positioning is positive/bullish) or -1 (if negative/bearish)
 
+You MUST respond strictly with a JSON array containing exactly 8 objects (one for each major currency). Follow the structural JSON Schema constraint.`;
+
+            // HIGHLY IMPORTANT: We force structured output via Gemini's native API responseSchema.
+            // This guarantees that the JSON format returned by the server is 100% deterministic, preventing parsing errors.
             const payload = {
-                contents: [{ parts: [{ text: 'Estimate current currency strength scores for USD, EUR, GBP, JPY, AUD, CAD, CHF, NZD across W1, D1, H4, H1, M15, M5, plus EMA20 position, RSI(14) posture, and macro sentiment.' }] }],
+                contents: [{ parts: [{ text: 'Generate currency strength score estimation models for the 8 major currencies (USD, EUR, GBP, JPY, AUD, CAD, CHF, NZD) using recent internet data grounding.' }] }],
                 tools: [{ google_search: {} }],
                 systemInstruction: { parts: [{ text: systemPrompt }] },
                 generationConfig: { 
                     responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "ARRAY",
+                        description: "List of currency strength estimations",
+                        items: {
+                            type: "OBJECT",
+                            properties: {
+                                code: { type: "STRING", description: "3-letter uppercase currency code (e.g., USD, EUR, GBP, JPY, AUD, CAD, CHF, NZD)" },
+                                trendW1: { type: "NUMBER", description: "+3, 0, or -3" },
+                                trendD1: { type: "NUMBER", description: "+2, 0, or -2" },
+                                trendH4: { type: "NUMBER", description: "+1.5, 0, or -1.5" },
+                                trendH1: { type: "NUMBER", description: "+1, 0, or -1" },
+                                trendM15: { type: "NUMBER", description: "+0.5, 0, or -0.5" },
+                                trendM5: { type: "NUMBER", description: "+0.5, 0, or -0.5" },
+                                ema20: { type: "NUMBER", description: "+1 or -1" },
+                                rsi: { type: "NUMBER", description: "+1 or -1" },
+                                sentiment: { type: "NUMBER", description: "+1 or -1" }
+                            },
+                            required: ["code", "trendW1", "trendD1", "trendH4", "trendH1", "trendM15", "trendM5", "ema20", "rsi", "sentiment"]
+                        }
+                    },
                     thinkingConfig: {
-                        thinkingBudget: 0 // Keep response fast for flash models
+                        thinkingBudget: 0
                     }
                 }
             };
@@ -1408,8 +1431,22 @@ Output STRICTLY a JSON array of 8 objects, one per currency code. No prose, no m
 
                 let mapped = 0;
                 parsedData.forEach(item => {
-                    const matched = currencies.find(c => c.code === item.code);
+                    // Fail-safe 1: Case-insensitivity & check for alternative code property names
+                    let rawCode = (item.code || item.currency || item.symbol || '').toString().toUpperCase().trim();
+                    
+                    // Fail-safe 2: If code is nested as an object key instead (e.g. {"USD": {...}})
+                    if (!rawCode) {
+                        const keys = Object.keys(item);
+                        const possibleCode = keys.find(k => ['USD','EUR','GBP','JPY','AUD','CAD','CHF','NZD'].includes(k.toUpperCase()));
+                        if (possibleCode) {
+                            rawCode = possibleCode.toUpperCase();
+                            item = item[possibleCode];
+                        }
+                    }
+
+                    const matched = currencies.find(c => c.code === rawCode);
                     if (!matched) return;
+
                     ALL_KEYS.forEach(k => {
                         const v = Number(item[k]);
                         matched[k] = Number.isFinite(v) ? v : 0;
@@ -1418,7 +1455,7 @@ Output STRICTLY a JSON array of 8 objects, one per currency code. No prose, no m
                     appendLog(`[GHI NHẬN] ${matched.code}: Đã nhận diện & nạp chỉ số thành công.`);
                 });
                 
-                if (mapped === 0) throw new Error('Không có đồng tiền nào trùng khớp để ánh xạ dữ liệu.');
+                if (mapped === 0) throw new Error('Mô hình AI phản hồi cấu trúc không khớp với bất kỳ đồng tiền chính nào của hệ thống.');
 
                 dataMeta = { source: 'ai', updatedAt: Date.now() };
                 appendLog('[HOÀN THÀNH] Hoàn tất nạp dữ liệu từ Gemini 3.5 Flash.');
@@ -1574,7 +1611,7 @@ Output STRICTLY a JSON array of 8 objects, one per currency code. No prose, no m
                 return `
                     <div onclick="viewArchiveItem('${item.id}')" class="bg-slate-900/40 hover:bg-indigo-950/20 p-4 rounded-xl border border-slate-800/80 hover:border-indigo-500/30 transition-all duration-300 cursor-pointer flex items-center justify-between group shadow-sm hover:scale-[1.01]">
                         <div class="space-y-1.5">
-                            <span class="text-xs font-bold text-slate-200 flex items-center space-x-2"><span>${escapeHtml(item.date)}</span>${sourceBadgeHtml(item.source)}</span>
+                            <span class="text-xs font-bold text-slate-200 flex items-center space-x-1.5"><span>${escapeHtml(item.date)}</span>${sourceBadgeHtml(item.source)}</span>
                             <div class="flex items-center space-x-2 text-[10px]">
                                 <span class="text-emerald-400 font-extrabold">Mạnh nhất: ${strongest.code} (${fmtScore(strongest.score)})</span>
                                 <span class="text-slate-600 font-bold">|</span>
@@ -1726,7 +1763,7 @@ Output STRICTLY a JSON array of 8 objects, one per currency code. No prose, no m
                         toast('Đã phục hồi toàn bộ dữ liệu thành công!', 'success');
                     });
                 } catch (err) {
-                    toast('Lỗi đọc tệp sao lưu: ' + err.message, 'error');
+                    toast('Lỗi khôi phục: ' + err.message, 'error');
                 } finally {
                     event.target.value = '';
                 }
